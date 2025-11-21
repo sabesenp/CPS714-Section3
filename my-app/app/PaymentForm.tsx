@@ -55,11 +55,11 @@ export default function PaymentForm({
         setIsProcessing(true);
         
         try {
-            // 1. SIMULATE SECURE PAYMENT PROCESSING (Stripe Element interaction simulation)
+            // 1. SIMULATE SECURE PAYMENT PROCESSING 
             console.log(`Simulating payment initiation for ${formatValue(amount)} using card ending in ${cardNumber.slice(-4)}...`);
             await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network latency
             
-            // 2. UPDATE BALANCE IN SUPABASE (Called after simulated payment success)
+            // 2. UPDATE BALANCE IN SUPABASE 
             const success = await updateBalanceService(userId, amount);
 
             if (success) {
@@ -89,7 +89,7 @@ export default function PaymentForm({
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Make a Payment</h2>
             <p className="text-sm text-gray-600 dark:text-zinc-400 mb-6">Process one-time payments or add credits to your account.</p>
 
-            {/* --- CARD DETAILS INPUTS --- */}
+            {/* CARD DETAILS INPUTS */}
 
             {/* Card Holder Name */}
             <div className="mb-4">
