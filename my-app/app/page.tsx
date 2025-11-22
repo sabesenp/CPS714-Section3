@@ -10,6 +10,7 @@ import {
     formatDate,
     SubscriptionType,
     updateUserBalance,
+    updateMembershipTier,
 } from '../lib/dataService'; 
 
 import PaymentForm from './PaymentForm';
@@ -116,6 +117,9 @@ export default function PaymentsAndBilling() {
             currentPlan={currentPlan}
             formatValue={formatValue}
             formatDate={formatDate}
+            userId={mockUserId} // Pass userId for update
+            updateTierService={updateMembershipTier} // Pass upgrade/cancel logic
+            onSubscriptionUpdate={reloadDashboardData} // Pass reload trigger
           />
 
           {/* RIGHT BOX: Make a Payment Form */}
