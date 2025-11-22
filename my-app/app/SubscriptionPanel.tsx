@@ -9,6 +9,7 @@ interface SubscriptionPanelProps {
     formatValue: (value: any) => string;
     formatDate: (dateString: string) => string;
     userId: string;
+    // Service function to update tier/status, checks balance, and updates dates
     updateTierService: (userId: string, newTier: string, newStatus: string, currentBalance: number, price: number) => Promise<{ success: boolean, message: string }>;
     onSubscriptionUpdate: () => void; // Function to reload parent data
 }
@@ -24,6 +25,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
     // Check if currentPlan data has been loaded and is valid (needed to prevent errors on null data)
     const isDataLoaded = currentPlan && currentPlan.plan_name;
     const currentTier = currentPlan.plan_name?.toLowerCase();
+    // Derive current status: if is_active is true, status is active. Otherwise, use the status column or default to inactive.
     const currentStatus = currentPlan.is_active ? 'active' : (currentPlan.status?.toLowerCase() === 'canceled' ? 'canceled' : 'inactive');
     const currentBalance = currentPlan.balance ?? 0;
     const currentPrice = currentPlan.price ?? 0;
@@ -44,17 +46,27 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         const tierIndex = TIER_HIERARCHY.indexOf(currentTier);
         let newTier = currentTier;
         let newStatus = currentStatus;
-        let priceToCheck = currentPrice;
+        let priceToCheck = currentPrice; 
         
         // --- LOGIC EXECUTION ---
-        if (action === 'upgrade' || action === 'downgrade') {
-            const nextIndex = action === 'upgrade' ? tierIndex + 1 : tierIndex - 1;
+        if (action === 'upgrade') {
+            const nextIndex = tierIndex + 1;
             newTier = TIER_HIERARCHY[nextIndex];
-            newStatus = 'active'; // Upgrading activates the membership
-            priceToCheck = currentPrice; // Balance check uses current price for simplicity
+            newStatus = 'active'; 
 
             if (!newTier) {
-                setStatusMessage({ type: 'error', message: `Cannot ${action}: No tier available.` });
+                setStatusMessage({ type: 'error', message: `Cannot upgrade: Already on top tier.` });
+                setIsProcessing(false);
+                return;
+            }
+        } else if (action === 'downgrade') {
+            const nextIndex = tierIndex - 1;
+            newTier = TIER_HIERARCHY[nextIndex];
+            newStatus = 'active'; 
+            priceToCheck = 0; // ACTION: Downgrade is free and bypasses balance check
+
+            if (!newTier) {
+                setStatusMessage({ type: 'error', message: `Cannot downgrade: Already on lowest tier.` });
                 setIsProcessing(false);
                 return;
             }
@@ -63,20 +75,20 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             newTier = currentTier;
             priceToCheck = 0; // Cancellation is free
         } else if (action === 'reactivate') {
-            // ACTION: Ensure status is set to active and price is checked
+            // ACTION: Reactivation sets status to active and requires the monthly fee
             newStatus = 'active';
             newTier = currentTier;
-            priceToCheck = currentPrice; // Reactivation costs the monthly fee
+            priceToCheck = currentPrice; 
         }
 
         // --- Execute Supabase Update (Includes Balance Check and Date Reset) ---
         try {
-            // The service function handles: 1) Balance check, 2) Date setting (start/end), 3) DB write
+            // The service function handles: 1) Balance check, 2) Date setting, 3) DB write
             const result = await updateTierService(userId, newTier, newStatus, currentBalance, priceToCheck);
             
             if (result.success) {
                 setStatusMessage({ type: 'success', message: `Subscription successfully ${newStatus === 'active' ? 'updated/activated' : 'canceled'}.` });
-                onSubscriptionUpdate(); // RELOAD PARENT DATA
+                onSubscriptionUpdate(); // RELOAD PARENT DATA TO UPDATE DATES/BALANCE
             } else {
                 // This handles the "Insufficient balance" message from dataService.ts
                 setStatusMessage({ type: 'error', message: result.message });
