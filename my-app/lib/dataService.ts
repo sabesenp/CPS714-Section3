@@ -145,3 +145,30 @@ export async function updateUserBalance(userId: string, amount: number): Promise
     
     return true;
 }
+
+export async function updateMembershipTier(userId: string, newTier: string, newStatus: string): Promise<boolean> {
+     // Retrieve the current membership ID
+    const { data: membershipData, error: fetchError } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (fetchError || !membershipData) {
+        console.error("Failed to find user's membership row for update:", fetchError);
+        return false;
+    }
+
+    // Update the tier and status in the database
+    const { error: updateError } = await supabase
+        .from('memberships')
+        .update({ tier: newTier, status: newStatus })
+        .eq('id', membershipData.id); 
+
+    if (updateError) {
+        console.error('Supabase tier update failed:', updateError);
+        return false;
+    }
+    
+    return true;
+}
