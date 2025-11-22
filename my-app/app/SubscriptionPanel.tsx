@@ -12,7 +12,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
   const isDataLoaded = currentPlan && currentPlan.plan_name;
 
   return (
-    <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700">
+    <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700 subscription-panel">
       
       {/* Header and Status Badge */}
       <div className="flex justify-between items-start mb-4">
@@ -71,7 +71,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
 
       {/* Action Buttons */}
       <div className="flex space-x-4">
-        <button className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+        <button className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition btn-primary">
           Upgrade Plan
         </button>
         <button className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition">

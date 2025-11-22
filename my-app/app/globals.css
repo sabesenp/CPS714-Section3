@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Match frontend theme defaults (dark-first palette) */
+  --background: #242424;
+  --foreground: rgba(255,255,255,0.87);
+  --primary: #646cff;
+  --primary-hover: #535bf2;
+  --button-bg: #1a1a1a;
+  --button-radius: 8px;
+  --card-bg: rgba(26,26,26,0.8);
 }
 
 @theme inline {
@@ -14,13 +20,75 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* dark mode already close to frontend; keep primary */
+    --background: #242424;
+    --foreground: rgba(255,255,255,0.87);
+    --button-bg: #1a1a1a;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* Payment page specific styles */
+.payment-panel,
+.subscription-panel {
+  background: var(--card-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.payment-panel input[type="text"],
+.payment-panel input[type="number"],
+.subscription-panel input[type="text"],
+.subscription-panel input[type="number"],
+.payment-panel select,
+.subscription-panel select {
+  transition: box-shadow .16s ease, transform .12s ease;
+}
+
+.payment-panel input:focus,
+.subscription-panel input:focus,
+.payment-panel select:focus,
+.subscription-panel select:focus {
+  box-shadow: 0 6px 18px rgba(99,102,241,0.12);
+  transform: translateY(-1px);
+}
+
+.payment-panel .btn-primary,
+.subscription-panel .btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--button-radius);
+  padding: 0.6rem 1rem;
+}
+
+.payment-panel .btn-primary:hover,
+.subscription-panel .btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+/* Accessibility: larger hit targets on mobile */
+@media (max-width: 640px) {
+  .payment-panel,
+  .subscription-panel {
+    padding: 1.25rem !important;
+  }
+  .payment-panel button,
+  .subscription-panel button {
+    padding-top: .85rem !important;
+    padding-bottom: .85rem !important;
+  }
+}
+
+/* Subtle divider for content groups */
+.payment-panel .section-divider,
+.subscription-panel .section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.03));
+  margin: .75rem 0 1rem 0;
 }
