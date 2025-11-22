@@ -15,9 +15,10 @@ interface BillingRecord {
 
 interface BillingHistoryProps {
   userId?: string;
+  onTotalsUpdate?: (totalAmount: number, transactionCount: number) => void; //callback for total payment card
 }
 
-export default function BillingHistory({ userId }: BillingHistoryProps) {
+export default function BillingHistory({ userId, onTotalsUpdate }: BillingHistoryProps) {
   const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,19 +40,37 @@ export default function BillingHistory({ userId }: BillingHistoryProps) {
         const { data, error: supabaseError } = await supabase
           .from('billing-history')
           .select('*')
+          .eq('user_id', userId)
           .order('Date', { ascending: false });
 
         if (supabaseError) {
           console.error('Supabase billing history fetch error:', supabaseError);
           setError(`Failed to load billing history: ${supabaseError.message}`);
+          // notify parent of zero totals on error
+          onTotalsUpdate?.(0, 0);
           return;
         }
 
         setBillingRecords(data || []);
         console.log('Billing records loaded:', data);
+        // compute numeric total and count, then notify parent
+        const records = data || [];
+        const numericTotal = records.reduce((sum, r) => {
+          let amt = 0;
+          if (r.Amount == null) return sum;
+          if (typeof r.Amount === 'number') amt = r.Amount;
+          else if (typeof r.Amount === 'string') {
+            const cleaned = r.Amount.replace(/[$,C\$\s]/g, '');
+            const parsed = parseFloat(cleaned);
+            amt = isNaN(parsed) ? 0 : parsed;
+          }
+          return sum + amt;
+        }, 0);
+        onTotalsUpdate?.(numericTotal, records.length);
       } catch (err) {
         console.error('Error fetching billing history:', err);
         setError('An unexpected error occurred');
+        onTotalsUpdate?.(0, 0);
       } finally {
         setIsLoading(false);
       }
