@@ -145,3 +145,59 @@ export async function updateUserBalance(userId: string, amount: number): Promise
     
     return true;
 }
+
+export async function updateMembershipTier(userId: string, newTier: string, newStatus: string, currentBalance: number, price: number): Promise<{ success: boolean, message: string }> {
+     // 1. BALANCE CHECK (Only required for activation/upgrade)
+    if ((newStatus === 'active' || newStatus === 'past_due') && currentBalance < price) {
+        return { success: false, message: `Insufficient balance. Please make a payment first.` };
+    }
+
+     // Retrieve the current membership ID
+    const { data: membershipData, error: fetchError } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (fetchError || !membershipData) {
+        console.error("Failed to find user's membership row for update:", fetchError);
+        return { success: false, message: "Membership row not found in database." };
+    }
+
+    const updates: { tier: string, status: string, current_period_start: string | null, current_period_end: string | null, balance?: number } = {
+        tier: newTier,
+        status: newStatus,
+        current_period_start: null,
+        current_period_end: null,
+    };
+
+    if (newStatus === 'active') {
+        // Calculate new start and end dates for activation/reactivation
+        const now = new Date();
+        const nextMonth = new Date(now);
+        nextMonth.setMonth(now.getMonth() + 1); 
+        
+        updates.current_period_start = now.toISOString();
+        updates.current_period_end = nextMonth.toISOString();
+        
+        // DEDUCT PRICE FROM BALANCE UPON ACTIVATION
+        updates.balance = currentBalance - price;
+    } else if (newStatus === 'canceled' || newStatus === 'past_due') {
+        // Clear dates upon cancellation
+        updates.current_period_start = null;
+        updates.current_period_end = null;
+    }
+
+    // Update the tier, status, and dates in the database
+    const { error: updateError } = await supabase
+        .from('memberships')
+        .update(updates)
+        .eq('id', membershipData.id); 
+
+    if (updateError) {
+        console.error('Supabase tier update failed:', updateError);
+        return { success: false, message: "Database update failed." };
+    }
+    
+    return { success: true, message: "Update complete." };
+}
