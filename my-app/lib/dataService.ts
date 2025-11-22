@@ -159,10 +159,32 @@ export async function updateMembershipTier(userId: string, newTier: string, newS
         return false;
     }
 
-    // Update the tier and status in the database
+    const updates: { tier: string, status: string, current_period_start: string | null, current_period_end: string | null } = {
+        tier: newTier,
+        status: newStatus,
+        current_period_start: null,
+        current_period_end: null,
+    };
+
+    if (newStatus === 'active') {
+        // Calculate new start and end dates for activation/reactivation
+        const now = new Date();
+        const nextMonth = new Date(now);
+        // ACTION: Sets renewal one month from now
+        nextMonth.setMonth(now.getMonth() + 1); 
+        
+        updates.current_period_start = now.toISOString();
+        updates.current_period_end = nextMonth.toISOString();
+    } else if (newStatus === 'canceled' || newStatus === 'past_due') {
+        // Clear dates upon cancellation
+        updates.current_period_start = null;
+        updates.current_period_end = null;
+    }
+
+    // Update the tier, status, and dates in the database
     const { error: updateError } = await supabase
         .from('memberships')
-        .update({ tier: newTier, status: newStatus })
+        .update(updates)
         .eq('id', membershipData.id); 
 
     if (updateError) {

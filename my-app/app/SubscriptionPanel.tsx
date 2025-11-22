@@ -33,85 +33,87 @@ export default function SubscriptionPanel({
     ? `${formatValue(currentPlan.price)}/month`
     : 'N/A';
     
-  const currentPlanName = isDataLoaded ? currentPlan.plan_name.toUpperCase() : 'Loading Plan...';
+  const currentPlanName = isDataLoaded ? currentPlan.plan_name.toUpperCase() : 'LOADING...';
   const isActive = isDataLoaded && currentPlan.is_active;
 
-  const getNextTier = (currentTier: string) => {
-    switch (currentTier.toLowerCase()) {
-      case 'basic': return 'premium';
-      case 'premium': return 'vip';
-      case 'vip': return null;
-      default: return 'basic';
-    }
+  const getNextTier = (currentTier: string, direction: 'up' | 'down') => {
+    const tiers = ['basic', 'premium', 'vip'];
+    const currentIndex = tiers.indexOf(currentTier.toLowerCase());
+    
+    if (direction === 'up') return tiers[currentIndex + 1] || null;
+    if (direction === 'down') return tiers[currentIndex - 1] || null;
+    return null;
   };
 
-  const handleUpgrade = async () => {
-    if (!isActive) {
-        setMessage({ title: "Action Blocked", body: "Cannot upgrade an inactive subscription.", type: 'error' });
-        return;
+  const handleAction = async (action: 'upgrade' | 'cancel' | 'downgrade' | 'reactivate') => {
+    
+    let newTier = currentPlan.plan_name;
+    let newStatus = 'active';
+    let msgTitle = '';
+    let msgBody = '';
+    let confirmMsg = '';
+
+    const nextLowerTier = getNextTier(currentPlan.plan_name, 'down');
+    const nextHigherTier = getNextTier(currentPlan.plan_name, 'up');
+
+    if (action === 'cancel') {
+        if (!isActive) return setMessage({ title: "Already Inactive", body: "This subscription is already canceled or inactive.", type: 'info' });
+        newStatus = 'canceled';
+        msgTitle = "Cancellation Confirmed";
+        msgBody = `Your ${currentPlanName} plan is now CANCELED.`;
+        confirmMsg = `Are you sure you want to cancel your ${currentPlanName} subscription?`;
+    } 
+    else if (action === 'reactivate') {
+        if (isActive) return setMessage({ title: "Already Active", body: "Subscription is already active.", type: 'info' });
+        newStatus = 'active';
+        msgTitle = "Reactivation Successful!";
+        msgBody = `Your ${currentPlanName} plan is now ACTIVE.`;
+        confirmMsg = `Reactivate ${currentPlanName} plan?`;
+    } 
+    else if (action === 'upgrade') {
+        if (!isActive) return setMessage({ title: "Action Blocked", body: "Cannot upgrade an inactive subscription.", type: 'error' });
+        if (!nextHigherTier) return setMessage({ title: "Highest Tier", body: "You are already on the highest available plan (VIP).", type: 'info' });
+        
+        newTier = nextHigherTier;
+        msgTitle = "Upgrade Successful!";
+        msgBody = `Your plan has been upgraded to ${newTier.toUpperCase()}.`;
+        confirmMsg = `Confirm upgrade to ${newTier.toUpperCase()}?`;
+    } 
+    else if (action === 'downgrade') {
+        if (!isActive) return setMessage({ title: "Action Blocked", body: "Cannot downgrade an inactive subscription.", type: 'error' });
+        if (!nextLowerTier) return setMessage({ title: "Lowest Tier", body: "You are already on the lowest available plan (BASIC).", type: 'info' });
+        
+        newTier = nextLowerTier;
+        msgTitle = "Downgrade Successful!";
+        msgBody = `Your plan has been downgraded to ${newTier.toUpperCase()}.`;
+        confirmMsg = `Confirm downgrade to ${newTier.toUpperCase()}?`;
     }
-    
-    const nextTier = getNextTier(currentPlan.plan_name);
-    
-    if (!nextTier) {
-        setMessage({ title: "Highest Tier", body: "You are already on the highest available plan (VIP).", type: 'info' });
-        return;
+
+    // Use window.confirm temporarily until a custom modal is implemented
+    if (confirmMsg && !window.confirm(confirmMsg)) {
+        return; 
     }
 
     setIsProcessing(true);
     setMessage(null);
     
     try {
-        const success = await updateTierService(userId, nextTier, 'active');
+        const success = await updateTierService(userId, newTier, newStatus);
 
         if (success) {
             setMessage({
-                title: "Upgrade Successful!",
-                body: `Your plan has been upgraded to ${nextTier.toUpperCase()}. Reloading dashboard...`,
+                title: msgTitle,
+                body: msgBody + " Reloading dashboard...",
                 type: 'success',
             });
             onSubscriptionUpdate(); // Reload parent dashboard
         } else {
-            setMessage({ title: "Upgrade Failed", body: "Could not process upgrade request in the database.", type: 'error' });
+            setMessage({ title: "Action Failed", body: "Could not process request in the database.", type: 'error' });
         }
     } catch (error) {
-        setMessage({ title: "Upgrade Error", body: "An unexpected error occurred during upgrade.", type: 'error' });
+        setMessage({ title: "Action Error", body: "An unexpected error occurred. See console.", type: 'error' });
     } finally {
         setIsProcessing(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!isActive) {
-        setMessage({ title: "Already Inactive", body: "This subscription is already canceled or inactive.", type: 'info' });
-        return;
-    }
-
-    const confirmed = window.confirm(`Are you sure you want to cancel your ${currentPlanName} subscription? This will take effect on ${formatDate(currentPlan.next_renewal)}.`);
-    
-    if (confirmed) {
-        setIsProcessing(true);
-        setMessage(null);
-        
-        try {
-            // Note: In real life, cancellation sets status to 'pending_cancellation', here we set it to 'canceled'
-            const success = await updateTierService(userId, currentPlan.plan_name, 'canceled');
-
-            if (success) {
-                setMessage({
-                    title: "Cancellation Confirmed",
-                    body: `Your ${currentPlanName} plan is scheduled for cancellation. Reloading dashboard...`,
-                    type: 'success',
-                });
-                onSubscriptionUpdate(); // Reload parent dashboard
-            } else {
-                setMessage({ title: "Cancellation Failed", body: "Could not process cancellation request in the database.", type: 'error' });
-            }
-        } catch (error) {
-            setMessage({ title: "Cancellation Error", body: "An unexpected error occurred during cancellation.", type: 'error' });
-        } finally {
-            setIsProcessing(false);
-        }
     }
   };
 
@@ -120,6 +122,7 @@ export default function SubscriptionPanel({
     <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700 relative">
       
       {/* Action Message Box (Replaces alert/confirm) */}
+      {/* Implementation of the custom message box is crucial as per instructions */}
       {message && (
         <div className={`absolute top-0 left-0 right-0 p-4 border-l-4 rounded-t-xl z-10 
             ${message.type === 'success' ? 'bg-green-100 border-green-500 dark:bg-green-900' : 
@@ -190,21 +193,39 @@ export default function SubscriptionPanel({
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex space-x-4">
+      {/* Action Buttons Row 1 (Upgrade/Cancel) */}
+      <div className="flex space-x-4 mb-4">
         <button 
-          onClick={handleUpgrade}
-          disabled={isProcessing || !isDataLoaded}
+          onClick={() => handleAction('upgrade')}
+          disabled={isProcessing || !isDataLoaded || currentPlanName === 'VIP'}
           className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isProcessing ? 'Loading...' : 'Upgrade Plan'}
         </button>
         <button 
-          onClick={handleCancel}
+          onClick={() => handleAction('cancel')}
           disabled={isProcessing || !isDataLoaded || !isActive}
           className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isProcessing ? 'Loading...' : 'Cancel Subscription'}
+        </button>
+      </div>
+
+      {/* Action Buttons Row 2 (Downgrade/Reactivate) */}
+      <div className="flex space-x-4">
+        <button 
+          onClick={() => handleAction('downgrade')}
+          disabled={isProcessing || !isDataLoaded || currentPlanName === 'BASIC' || !isActive}
+          className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-gray-800 dark:text-zinc-200 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? 'Loading...' : 'Downgrade Plan'}
+        </button>
+        <button 
+          onClick={() => handleAction('reactivate')}
+          disabled={isProcessing || !isDataLoaded || isActive}
+          className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 rounded-lg text-indigo-600 dark:text-indigo-400 font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? 'Loading...' : 'Reactivate Plan'}
         </button>
       </div>
 
