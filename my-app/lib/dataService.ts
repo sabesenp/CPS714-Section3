@@ -149,7 +149,7 @@ export async function updateUserBalance(userId: string, amount: number): Promise
 export async function updateMembershipTier(userId: string, newTier: string, newStatus: string, currentBalance: number, price: number): Promise<{ success: boolean, message: string }> {
      // 1. BALANCE CHECK (Only required for activation/upgrade)
     if ((newStatus === 'active' || newStatus === 'past_due') && currentBalance < price) {
-        return { success: false, message: `Insufficient balance. Required: ${price}, Current: ${currentBalance}. Please make a payment first.` };
+        return { success: false, message: `Insufficient balance. Please make a payment first.` };
     }
 
      // Retrieve the current membership ID
