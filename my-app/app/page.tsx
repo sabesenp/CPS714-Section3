@@ -27,9 +27,17 @@ export default function PaymentsAndBilling() {
   const [error, setError] = useState<string | null>(null);
   const [testValue, setTestValue] = useState<string>('Checking Connection...');
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [totalPayments, setTotalPayments] = useState<string>(formatValue(0));
+  const [transactions, setTransactions] = useState<number>(0);
 
   const mockUserId = '49f7c14c-1c83-49fc-8701-38043efdb920'; 
   
+   // handler passed to BillingHistory to receive totals
+   const handleBillingTotals = (totalAmount: number, txnCount: number) => {
+     setTotalPayments(formatValue(totalAmount));
+     setTransactions(txnCount);
+   };
+
   const reloadDashboardData = useCallback(async () => {
     if (!mockUserId) { 
         setLoading(false); 
@@ -72,7 +80,12 @@ export default function PaymentsAndBilling() {
   
   // Format the balance for display
   const formattedBalance = formatValue(Math.abs(balance));
-
+// Use already-loaded subscription information for the cards
+  const nextPaymentAmount = currentPlan.price != null ? formatValue(currentPlan.price) : 'N/A';
+  const nextPaymentDate = currentPlan.next_renewal ? formatDate(currentPlan.next_renewal) : 'N/A';
+  const paymentPlan = currentPlan.plan_name ? formatValue(currentPlan.plan_name) : 'N/A';
+  const billingCycle = currentPlan.billing_cycle ? formatValue(currentPlan.billing_cycle) : 'N/A';
+  //const nextPaymentDate = currentPlan.next_renewal ? formatDate(currentPlan.next_renewal) : 'N/A';
   return (
     <div className="flex justify-center w-full min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-12 font-sans">
       
@@ -91,7 +104,7 @@ export default function PaymentsAndBilling() {
         {/* SECTION 1: SUMMARY CARDS (Top Row) */}
         <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           
-          {/*SUPABASE CONNECTION TEST*/}
+          {/* Current Balance Card */}
           <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
             <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Current Balance</p>
              <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
@@ -100,10 +113,24 @@ export default function PaymentsAndBilling() {
              </p>
              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{balanceStatus}</p>
           </div>
-          {/* Empty Box Placeholders */}
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700"></div>
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700"></div>
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700"></div>
+          {/* Next Payment Card */}
+          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
+            <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Next Payment</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{nextPaymentAmount}</p>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{nextPaymentDate}</p>
+          </div>
+          {/* Active Subscription Card */}
+          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
+            <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Active Subscription</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{paymentPlan.toUpperCase()}</p>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">Billed {billingCycle}</p>
+          </div>
+          {/* Total Payments Card */}
+          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
+            <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Total Payments (2025)</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalPayments}</p>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{transactions} transactions</p>
+          </div>
 
         </section>
 
@@ -135,7 +162,7 @@ export default function PaymentsAndBilling() {
 
         {/* Billing History Section */}
         <section className="w-full mt-8">
-          <BillingHistory userId={mockUserId} />
+          <BillingHistory userId={mockUserId} onTotalsUpdate={handleBillingTotals}/>
         </section>
 
       </div>
