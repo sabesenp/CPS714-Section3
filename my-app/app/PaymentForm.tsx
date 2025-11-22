@@ -83,7 +83,7 @@ export default function PaymentForm({
     };
 
     return (
-        <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700">
+        <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700 payment-panel">
             
             {/* Header */}
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Make a Payment</h2>
@@ -176,7 +176,7 @@ export default function PaymentForm({
             {/* Process Payment Button */}
             <button 
                 onClick={handleProcessPayment}
-                className="flex justify-center items-center w-full py-3 mb-2 bg-black dark:bg-indigo-600 text-white font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-indigo-700 transition disabled:bg-gray-400 dark:disabled:bg-gray-700"
+                className="flex justify-center items-center w-full py-3 mb-2 bg-black dark:bg-indigo-600 text-white font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-indigo-700 transition disabled:bg-gray-400 dark:disabled:bg-gray-700 btn-primary"
                 disabled={isProcessing}
             >
                 {isProcessing ? (
