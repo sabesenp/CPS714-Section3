@@ -1,6 +1,5 @@
-// This file is responsible for all communication with Supabase and data formatting.
 
-import { supabase } from './supabase';
+import { supabase } from './supabase'; 
 
 // --- Type Definition for Fetched Data (from DB) ---
 interface FetchedData {
@@ -9,9 +8,9 @@ interface FetchedData {
     current_period_start: string | null;
     current_period_end: string | null;
     created_at: string | null;
-    balance: number;
-    // The joined data is a single object { Cost: number } or null if no match found
     subscriptions: { Cost: number } | null; 
+    balance: number | null; 
+    recurring: string | null; // Added recurring field
 }
 
 // --- Type Definition for Subscription Data (for Component) ---
@@ -22,7 +21,16 @@ export type SubscriptionType = {
     is_active: boolean;
     member_since: string | null;
     next_renewal: string | null;
-    balance: number;
+    balance: number | null;
+    recurring: string; // Added recurring field
+};
+
+// --- Type Definition for Payment Methods (for Component) ---
+export type PaymentMethod = {
+    id: number;
+    card_type: string;
+    last_four: string;
+    is_default: boolean;
 };
 
 
@@ -77,6 +85,7 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
         current_period_end, 
         created_at,
         balance,
+        recurring, 
         subscriptions ( Cost ) 
       `)
       .eq('user_id', userId)
@@ -93,29 +102,35 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
         
         const price = membershipData.subscriptions?.Cost ?? null; 
         
-        const { tier, status, created_at, current_period_start, current_period_end, balance } = membershipData;
+        const { tier, status, created_at, current_period_start, current_period_end, balance, recurring } = membershipData;
 
         return {
             plan_name: tier,
             price: price, 
-            billing_cycle: 'monthly', 
+            billing_cycle: recurring || 'monthly', // Use recurring from DB, default to monthly
             is_active: status === 'active',
             member_since: created_at || current_period_start,
             next_renewal: current_period_end,
-            balance: balance ?? 0,
+            balance: balance,
+            recurring: recurring || 'monthly',
         };
     }
 
     return null;
 }
 
+export async function fetchPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+    // --- MOCK IMPLEMENTATION ---
+    return [
+        { id: 101, card_type: "Visa", last_four: "4242", is_default: true },
+        { id: 102, card_type: "Mastercard", last_four: "1234", is_default: false },
+    ];
+}
+
+
 export async function updateUserBalance(userId: string, amount: number): Promise<boolean> {
     
-    // NOTE: For simplicity, we are assuming 'balance' is stored as a positive number (credit)
-    // and we are simply SETTING the new balance. In a professional app, you would use 
-    // PostgreSQL's increment operator for safer transactions.
-    
-    // First, retrieve the current membership ID, as 'user_id' is not the PK for 'memberships'
+    // 1. Retrieve the current membership ID and balance
     const { data: membershipData, error: fetchError } = await supabase
         .from('memberships')
         .select('id, balance')
@@ -123,20 +138,19 @@ export async function updateUserBalance(userId: string, amount: number): Promise
         .maybeSingle();
 
     if (fetchError || !membershipData) {
-        console.error("Failed to find user's membership row:", fetchError);
+        console.error("Failed to find user's membership row for update:", fetchError);
         return false;
     }
     
-    // Calculate the new balance: Current balance (credit) + Payment amount
-    // Note: If balance is stored as debt (negative), the logic changes. Assuming balance is credit.
+    // 2. Calculate the new balance (Current credit + Payment amount)
     const currentBalance = membershipData.balance ?? 0;
     const newBalance = currentBalance + amount; 
     
-    // Update the balance in the database
+    // 3. Update the balance in the database
     const { error: updateError } = await supabase
         .from('memberships')
         .update({ balance: newBalance })
-        .eq('id', membershipData.id); // Update by membership primary key (id)
+        .eq('id', membershipData.id);
 
     if (updateError) {
         console.error('Supabase balance update failed:', updateError);
@@ -146,58 +160,83 @@ export async function updateUserBalance(userId: string, amount: number): Promise
     return true;
 }
 
-export async function updateMembershipTier(userId: string, newTier: string, newStatus: string, currentBalance: number, price: number): Promise<{ success: boolean, message: string }> {
-     // 1. BALANCE CHECK (Only required for activation/upgrade)
-    if ((newStatus === 'active' || newStatus === 'past_due') && currentBalance < price) {
-        return { success: false, message: `Insufficient balance. Please make a payment first.` };
+export async function updateMembershipTier(
+    userId: string, 
+    newTier: string, 
+    newStatus: string, 
+    currentBalance: number, 
+    price: number,
+    action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel' | 'cycle',
+    newRecurringCycle: 'monthly' | 'annual'
+): Promise<{ success: boolean, message: string }> {
+    
+    // --- BALANCE SUFFICIENCY CHECK (Only for actions that cost money) ---
+    if (action === 'upgrade' || action === 'reactivate') {
+        if (currentBalance < price) {
+            return { 
+                success: false, 
+                message: "Insufficient balance. Please make a payment first." // Simplified message
+            };
+        }
     }
+    
+    // 1. Calculate new dates
+    let updatedFields: { [key: string]: any } = { 
+        tier: newTier, 
+        status: newStatus,
+        recurring: newRecurringCycle 
+    };
 
-     // Retrieve the current membership ID
+    if (newStatus === 'active') {
+        const now = new Date();
+        const nextPeriodEnd = new Date(now); // Start with current date
+        
+        // Calculate renewal date based on cycle
+        if (newRecurringCycle === 'monthly') {
+            nextPeriodEnd.setMonth(now.getMonth() + 1);
+        } else if (newRecurringCycle === 'annual') {
+            nextPeriodEnd.setFullYear(now.getFullYear() + 1);
+        }
+
+        updatedFields.current_period_start = now.toISOString();
+        updatedFields.current_period_end = nextPeriodEnd.toISOString();
+        
+    } else if (newStatus === 'canceled') {
+        // When canceled, clear renewal dates as requested
+        updatedFields.current_period_start = null;
+        updatedFields.current_period_end = null;
+    }
+    
+    // 2. Retrieve membership ID and update DB
     const { data: membershipData, error: fetchError } = await supabase
         .from('memberships')
-        .select('id')
+        .select('id, balance')
         .eq('user_id', userId)
         .maybeSingle();
 
     if (fetchError || !membershipData) {
-        console.error("Failed to find user's membership row for update:", fetchError);
-        return { success: false, message: "Membership row not found in database." };
-    }
-
-    const updates: { tier: string, status: string, current_period_start: string | null, current_period_end: string | null, balance?: number } = {
-        tier: newTier,
-        status: newStatus,
-        current_period_start: null,
-        current_period_end: null,
-    };
-
-    if (newStatus === 'active') {
-        // Calculate new start and end dates for activation/reactivation
-        const now = new Date();
-        const nextMonth = new Date(now);
-        nextMonth.setMonth(now.getMonth() + 1); 
-        
-        updates.current_period_start = now.toISOString();
-        updates.current_period_end = nextMonth.toISOString();
-        
-        // DEDUCT PRICE FROM BALANCE UPON ACTIVATION
-        updates.balance = currentBalance - price;
-    } else if (newStatus === 'canceled' || newStatus === 'past_due') {
-        // Clear dates upon cancellation
-        updates.current_period_start = null;
-        updates.current_period_end = null;
-    }
-
-    // Update the tier, status, and dates in the database
-    const { error: updateError } = await supabase
-        .from('memberships')
-        .update(updates)
-        .eq('id', membershipData.id); 
-
-    if (updateError) {
-        console.error('Supabase tier update failed:', updateError);
-        return { success: false, message: "Database update failed." };
+        console.error("Failed to find user's membership row for tier update:", fetchError);
+        return { success: false, message: "Membership record not found." };
     }
     
-    return { success: true, message: "Update complete." };
+    let newBalance = membershipData.balance ?? 0;
+
+    // 3. DEDUCT PRICE (Only for upgrade/reactivate actions)
+    if (action === 'upgrade' || action === 'reactivate') {
+        newBalance = newBalance - price;
+        updatedFields.balance = newBalance;
+    }
+    
+    // 4. Perform the final database update
+    const { error: updateError } = await supabase
+        .from('memberships')
+        .update(updatedFields)
+        .eq('id', membershipData.id);
+
+    if (updateError) {
+        console.error('Supabase membership update failed:', updateError);
+        return { success: false, message: `Update failed: ${updateError.message}` };
+    }
+    
+    return { success: true, message: `Plan successfully updated to ${newTier.toUpperCase()}.` };
 }
