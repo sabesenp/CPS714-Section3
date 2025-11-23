@@ -112,7 +112,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
 
             {/* Status Message */}
             {statusMessage && (
-                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
                     {isProcessing ? 'Processing request...' : statusMessage.message}
                 </div>
             )}

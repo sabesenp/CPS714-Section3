@@ -116,7 +116,7 @@ export default function PaymentsAndBilling() {
           {/* 🟢 Box 1: CURRENT BALANCE */}
           <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
              <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Current Balance</p>
-             <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
+             <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-yellow-500'}`}>
                  {balance < 0 ? "-" : ""}
                  {formattedBalance}
              </p>

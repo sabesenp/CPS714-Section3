@@ -9,6 +9,10 @@
   --button-bg: #1a1a1a;
   --button-radius: 8px;
   --card-bg: rgba(26,26,26,0.8);
+  /* Muted yellow accent requested by user */
+  --accent: #d0a405;
+  --accent-100: rgba(208,164,5,0.08);
+  --accent-900: rgba(80,60,0,0.9);
 }
 
 @theme inline {
@@ -70,6 +74,16 @@ body {
 .payment-panel .btn-primary:hover,
 .subscription-panel .btn-primary:hover {
   background: var(--primary-hover);
+}
+
+/* small helper class for accent badges if components want a consistent look */
+.badge-accent {
+  background: var(--accent-100);
+  color: var(--accent);
+  padding: .25rem .5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: .75rem;
 }
 
 /* Accessibility: larger hit targets on mobile */

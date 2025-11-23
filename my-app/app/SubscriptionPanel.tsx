@@ -135,7 +135,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </div>
                 {/* Status Badge */}
                 {isDataLoaded && currentPlan.is_active ? (
-                    <span className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full dark:text-green-300 dark:bg-green-900 self-start">
+                    <span className="px-3 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full dark:text-yellow-300 dark:bg-yellow-900 self-start">
                         Active
                     </span>
                 ) : (
@@ -185,7 +185,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             
             {/* --- Status Message Alert --- */}
             {statusMessage && (
-                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
                     {isProcessing ? 'Processing request...' : statusMessage.message}
                 </div>
             )}
@@ -230,7 +230,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </button>
                 <button 
                     onClick={() => handleAction('reactivate')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-green-500 text-green-600 rounded-lg font-medium hover:bg-green-50 dark:hover:bg-green-900 transition disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center py-2 px-4 border border-yellow-500 text-yellow-600 rounded-lg font-medium hover:bg-yellow-50 dark:hover:bg-yellow-900 transition disabled:opacity-50"
                     disabled={isProcessing || !canReactivate}
                 >
                     {isProcessing && canReactivate ? 'Activating...' : 'Reactivate Plan'}
