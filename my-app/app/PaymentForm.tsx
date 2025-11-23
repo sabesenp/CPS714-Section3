@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { updateMembershipTier, SubscriptionType } from '../lib/dataService'; 
 
 interface PaymentMethod {
     id: number;
@@ -9,14 +10,26 @@ interface PaymentMethod {
     is_default: boolean;
 }
 
+// ACTION: Loosening the currentRecurring type to string (as requested)
 interface PaymentFormProps {
+    currentPlan: SubscriptionType; 
     paymentMethods: PaymentMethod[];
     userId: string;
     updateBalanceService: (userId: string, amount: number) => Promise<boolean>;
     onPaymentSuccess: () => void;
+    // FIX: Changed to allow any string, resolving the TypeScript error
+    currentRecurring: string; 
 }
 
-export default function PaymentForm({ paymentMethods, userId, updateBalanceService, onPaymentSuccess }: PaymentFormProps) {
+// Helper to safely coerce the string to a valid cycle for function calls
+const getValidCycle = (cycle: string): 'monthly' | 'annual' => {
+    const lower = cycle.toLowerCase();
+    if (lower === 'annual') return 'annual';
+    return 'monthly'; // Default to monthly if anything else is passed
+};
+
+// ACTION: Updated function signature to accept currentPlan
+export default function PaymentForm({ currentPlan, paymentMethods, userId, updateBalanceService, onPaymentSuccess, currentRecurring }: PaymentFormProps) {
     // --- Form State ---
     const [cardholderName, setCardholderName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
@@ -27,9 +40,13 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
     // --- UI State ---
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success', message: string } | null>(null);
+    
+    // Local state for the toggle UI, initialized from parent prop, using the safe helper
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(getValidCycle(currentRecurring));
+
 
     const formatValue = (value: number) => {
-        // Simple formatter for local display, matching the currency defined in payments.tsx (CAD)
+        // Simple formatter for local display, matching the currency defined in dataService.ts (CAD)
         return `C$${value.toFixed(2)}`;
     };
 
@@ -38,6 +55,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
     const validateForm = () => {
         if (amount <= 0) return "Please enter an amount greater than zero.";
         if (cardholderName.trim() === '') return "Cardholder name is required.";
+        // Simple validation checks for required fields
         if (cardNumber.replace(/\s/g, '').length !== 16) return "Card number must be 16 digits.";
         if (cvc.length !== 3) return "CVC must be 3 digits.";
         if (expDate.length !== 5 || !expDate.includes('/')) return "Expiration date must be MM/YY (e.g., 12/25).";
@@ -45,9 +63,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
     };
 
     const formatCardNumber = (value: string) => {
-        // Remove non-digits
         const cleaned = value.replace(/\D/g, '');
-        // Apply grouping pattern (4 digits, space, 4 digits...)
         return cleaned.match(/.{1,4}/g)?.join(' ').slice(0, 19) || '';
     };
 
@@ -61,6 +77,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
 
     // --- Action Handler ---
 
+    // Handler for the payment button (updates balance)
     const handleProcessPayment = async () => {
         const validationError = validateForm();
         if (validationError) {
@@ -70,22 +87,17 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
 
         setIsProcessing(true);
         setStatusMessage(null);
-
-        // --- Payment Simulation & Balance Update ---
         
-        // 1. Simulate API latency
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         try {
-            // 2. Call the service to update the user's balance in the database (Add the payment amount)
+            // Call the service to update the user's balance in the database
             const success = await updateBalanceService(userId, amount);
 
             if (success) {
                 setStatusMessage({ type: 'success', message: `Payment of ${formatValue(amount)} successful! Credit balance updated.` });
-                // Reload parent component data to show new balance instantly
                 onPaymentSuccess();
-                
-                // Optional: Clear form fields on success
+                // Clear form fields on success
                 setCardholderName('');
                 setCardNumber('');
                 setExpDate('');
@@ -101,6 +113,40 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
             setIsProcessing(false);
         }
     };
+    
+    // Handler for the toggle switch (updates recurring field in DB)
+    const handleToggleCycle = async () => {
+        const newCycle = billingCycle === 'monthly' ? 'annual' : 'monthly';
+        
+        setIsProcessing(true);
+        setStatusMessage(null);
+        
+        try {
+             // Use currentPlan properties needed for the service call
+             const result = await updateMembershipTier(
+                userId, 
+                currentPlan.plan_name ?? 'basic', // FIX: Safely coalesce plan_name to a non-null string ('basic')
+                currentPlan.is_active ? 'active' : 'inactive', 
+                currentPlan.balance ?? 0, 
+                0, // Price check is 0
+                'cycle', // Action type
+                newCycle
+            );
+
+            if (result.success) {
+                setStatusMessage({ type: 'success', message: `Billing cycle successfully switched to ${newCycle.toUpperCase()}.` });
+                setBillingCycle(newCycle); // Update local state for UI
+                onPaymentSuccess(); // Reload parent data
+            } else {
+                 setStatusMessage({ type: 'error', message: result.message });
+            }
+        } catch (error) {
+            setStatusMessage({ type: 'error', message: "A server error occurred during the cycle switch." });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
 
     return (
         // ACTION: Uses payment-panel class for custom styling
@@ -140,7 +186,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
                     value={cardholderName}
                     onChange={(e) => setCardholderName(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 dark:bg-zinc-700 text-gray-900 dark:text-white"
-                    placeholder="Jane Doe"
+                    placeholder="Jane Doe (Simulation)" // UPDATED PLACEHOLDER
                 />
             </div>
             
@@ -153,7 +199,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
                     onChange={(e) => setCardNumber(e.target.value)}
                     maxLength={19}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 dark:bg-zinc-700 text-gray-900 dark:text-white"
-                    placeholder="XXXX XXXX XXXX XXXX"
+                    placeholder="4444 4444 4444 4444" // UPDATED PLACEHOLDER
                 />
             </div>
 
@@ -167,7 +213,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
                         onChange={(e) => setExpDate(e.target.value)}
                         maxLength={5}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 dark:bg-zinc-700 text-gray-900 dark:text-white"
-                        placeholder="MM/YY"
+                        placeholder="01/25" // UPDATED PLACEHOLDER
                     />
                 </div>
                 <div className="flex-1">
@@ -178,7 +224,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
                         onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 3))}
                         maxLength={3}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 dark:bg-zinc-700 text-gray-900 dark:text-white"
-                        placeholder="123"
+                        placeholder="123" // UPDATED PLACEHOLDER
                     />
                 </div>
             </div>
@@ -202,9 +248,34 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
             </button>
             
             {/* Security Message */}
-            <p className="text-center text-xs text-gray-500 dark:text-zinc-400">
+            <p className="text-center text-xs text-gray-500 dark:text-zinc-400 mb-6">
                 Secure payment processing simulated
             </p>
+
+            {/* --- Recurring Cycle Toggle --- */}
+            <div className="flex justify-between items-center bg-gray-50 dark:bg-zinc-700 p-3 rounded-lg border border-gray-200 dark:border-zinc-600">
+                <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                    Recurring Billing Cycle
+                </span>
+                <button
+                    onClick={handleToggleCycle}
+                    disabled={isProcessing}
+                    className={`relative inline-flex items-center h-8 transition-colors duration-200 ease-in-out rounded-full w-24 focus:outline-none ${
+                        billingCycle === 'annual' ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-zinc-600'
+                    }`}
+                >
+                    <span
+                        className={`inline-block w-12 h-6 transform bg-white rounded-full transition-transform duration-200 ease-in-out shadow-md text-xs font-semibold flex items-center justify-center ${
+                            billingCycle === 'annual'
+                                ? 'translate-x-[45px] text-indigo-600' // Moved right for annual
+                                : 'translate-x-[5px] text-gray-600' // Moved left for monthly
+                        }`}
+                        style={{ width: '45px' }}
+                    >
+                        {billingCycle === 'annual' ? 'Annual' : 'Monthly'}
+                    </span>
+                </button>
+            </div>
         </div>
     );
 }

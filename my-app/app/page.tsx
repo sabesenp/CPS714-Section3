@@ -80,7 +80,7 @@ export default function PaymentsAndBilling() {
   if (error) return <div className="flex justify-center w-full min-h-screen items-center text-red-500">Error: {error}</div>;
 
   // FALLBACK/TYPE ASSERTION: Correctly handles null subscription object.
-  const currentPlan = subscription || {} as SubscriptionType;
+  const currentPlan = subscription || {} as CurrentSubscriptionType;
 
   // BALANCE CALCULATION: Correctly handles null balance from DB by defaulting to 0.
   const balance = currentPlan.balance ?? 0; 
@@ -94,6 +94,15 @@ export default function PaymentsAndBilling() {
   const nextPaymentDate = currentPlan.next_renewal ? formatDate(currentPlan.next_renewal) : 'N/A';
   const paymentPlan = currentPlan.plan_name ? currentPlan.plan_name.toUpperCase() : 'N/A';
   const billingCycle = currentPlan.recurring ? currentPlan.recurring.toUpperCase() : 'N/A';
+
+  // FIX: Utility function to safely narrow the string to 'monthly' or 'annual'
+  const getSafeRecurringCycle = (cycle: string | null): 'monthly' | 'annual' => {
+      const lower = cycle?.toLowerCase();
+      if (lower === 'monthly' || lower === 'annual') {
+          return lower;
+      }
+      return 'monthly'; // Default to monthly if invalid or null
+  }
 
   return (
     <div className="flex justify-center w-full min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-12 font-sans">
@@ -163,6 +172,9 @@ export default function PaymentsAndBilling() {
 
           {/* RIGHT BOX: Make a Payment Form */}
           <PaymentForm
+            currentPlan={currentPlan} // ADDED
+            // FIX: Use the safe utility function to ensure type is 'monthly' or 'annual'
+            currentRecurring={getSafeRecurringCycle(currentPlan.recurring)} 
             paymentMethods={paymentMethods}
             userId={mockUserId}
             updateBalanceService={updateUserBalance}

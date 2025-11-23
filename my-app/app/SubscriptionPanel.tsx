@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 
-// Props interface for clarity
+// ACTION: Updated Props interface to match the 7 arguments required by updateMembershipTier
 interface SubscriptionPanelProps {
     currentPlan: any; 
     formatValue: (value: any) => string;
     formatDate: (dateString: string) => string;
     userId: string;
-    // Service function to update tier/status, checks balance, and updates dates
+    // CRITICAL FIX: The signature now includes the 'action' and 'newRecurringCycle' parameters.
     updateTierService: (
         userId: string, 
         newTier: string, 
         newStatus: string, 
         currentBalance: number, 
         price: number,
-        action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel' | 'cycle',
-        newRecurringCycle: 'monthly' | 'annual'
+        action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel' | 'cycle', 
+        newRecurringCycle: 'monthly' | 'annual' 
     ) => Promise<{ success: boolean, message: string }>;
     onSubscriptionUpdate: () => void; // Function to reload parent data
 }
@@ -31,15 +31,21 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
 
     // Check if currentPlan data has been loaded and is valid (needed to prevent errors on null data)
     const isDataLoaded = currentPlan && currentPlan.plan_name;
-    const currentTier = currentPlan.plan_name?.toLowerCase();
-    const currentStatus = currentPlan.is_active ? 'active' : (currentPlan.status?.toLowerCase() === 'canceled' ? 'canceled' : 'inactive');
+    
+    // FIX: Safely access plan_name and currentStatus, providing a default string fallback.
+    const currentTier = currentPlan.plan_name?.toLowerCase() ?? '';
+    // FIX: Ensure status is a non-null string for the logic below
+    const currentStatus = currentPlan.is_active ? 'active' : (currentPlan.status?.toLowerCase() ?? 'inactive'); 
+    
     const currentBalance = currentPlan.balance ?? 0;
     const currentPrice = currentPlan.price ?? 0;
-    const currentRecurring = currentPlan.billing_cycle === 'annual' ? 'annual' : 'monthly';
+    
+    // CRITICAL: currentRecurring is derived from the safe check in the parent
+    const currentRecurring = currentPlan.recurring === 'annual' ? 'annual' : 'monthly';
 
     // Determine the price display
     const priceDisplay = isDataLoaded && currentPrice !== null 
-        ? `${formatValue(currentPrice)}/month`
+        ? `${formatValue(currentPrice)}/${currentRecurring === 'annual' ? 'year' : 'month'}` // Dynamic suffix
         : 'N/A';
 
     // --- Action Handlers ---
@@ -54,7 +60,9 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         let newTier = currentTier;
         let newStatus = currentStatus;
         let priceToCheck = currentPrice; 
-        let newRecurringCycle: 'monthly' | 'annual' = currentRecurring;
+        
+        // FIX: Ensure newRecurringCycle is explicitly typed as the literal type
+        let newRecurringCycle: 'monthly' | 'annual' = currentRecurring; 
 
         // --- LOGIC EXECUTION ---
         if (action === 'upgrade') {
@@ -98,7 +106,15 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         // --- Execute Supabase Update (Includes Balance Check and Date Reset) ---
         try {
             // The service function handles: 1) Balance check, 2) Date setting, 3) DB write
-            const result = await updateTierService(userId, newTier, newStatus, currentBalance, priceToCheck, action, newRecurringCycle);
+            const result = await updateTierService(
+                userId, 
+                newTier, 
+                newStatus, 
+                currentBalance, 
+                priceToCheck, 
+                action, 
+                newRecurringCycle
+            );
             
             if (result.success) {
                 setStatusMessage({ type: 'success', message: `Subscription successfully ${action === 'cancel' ? 'canceled' : (action === 'cycle' ? 'cycle updated' : 'updated/activated')}.` });
@@ -149,7 +165,8 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex justify-between items-end mb-6 border-b border-gray-200 dark:border-zinc-700 pb-4">
                 <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {isDataLoaded ? currentPlan.plan_name.toUpperCase() : 'Loading Plan...'}
+                        {/* FIX: Use optional chaining and fallback string to guarantee non-null string */}
+                        {isDataLoaded ? (currentPlan.plan_name ?? 'N/A').toUpperCase() : 'Loading Plan...'}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-zinc-400">
                         Billed {isDataLoaded ? currentRecurring.toUpperCase() : 'N/A'}
