@@ -112,7 +112,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
 
             {/* Status Message */}
             {statusMessage && (
-                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
+                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {isProcessing ? 'Processing request...' : statusMessage.message}
                 </div>
             )}
@@ -186,7 +186,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
             {/* Process Payment Button */}
             <button 
                 onClick={handleProcessPayment}
-                className="flex justify-center items-center w-full py-3 mb-2 btn-primary font-medium rounded-lg transition disabled:opacity-50"
+                className="flex justify-center items-center w-full py-3 mb-2 bg-black dark:bg-indigo-600 text-white font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-indigo-700 transition disabled:bg-gray-400 dark:disabled:bg-gray-700 btn-primary"
                 disabled={isProcessing}
             >
                 {isProcessing ? (

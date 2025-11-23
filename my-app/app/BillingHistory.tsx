@@ -112,7 +112,7 @@ export default function BillingHistory({ userId, onTotalsUpdate }: BillingHistor
     switch (status.toLowerCase()) {
       case 'completed':
       case 'paid':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
       case 'failed':
