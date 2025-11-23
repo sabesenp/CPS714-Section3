@@ -186,7 +186,7 @@ export default function PaymentForm({ paymentMethods, userId, updateBalanceServi
             {/* Process Payment Button */}
             <button 
                 onClick={handleProcessPayment}
-                className="flex justify-center items-center w-full py-3 mb-2 bg-black dark:bg-indigo-600 text-white font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-indigo-700 transition disabled:bg-gray-400 dark:disabled:bg-gray-700 btn-primary"
+                className="flex justify-center items-center w-full py-3 mb-2 btn-primary font-medium rounded-lg transition disabled:opacity-50"
                 disabled={isProcessing}
             >
                 {isProcessing ? (

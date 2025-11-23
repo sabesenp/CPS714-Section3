@@ -194,7 +194,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex justify-end mb-4">
                 <button 
                     onClick={() => handleAction('cycle')}
-                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline transition disabled:opacity-50"
+                    className="text-sm text-yellow-600 dark:text-yellow-300 hover:underline transition disabled:opacity-50"
                     disabled={isProcessing}
                 >
                     Switch to {currentRecurring === 'monthly' ? 'Annual' : 'Monthly'} Billing
@@ -205,7 +205,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex space-x-4">
                 <button 
                     onClick={() => handleAction('upgrade')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-indigo-500 bg-indigo-500 text-white rounded-lg font-medium transition disabled:bg-gray-300 disabled:border-gray-300 hover:bg-indigo-600 btn-primary"
+                    className="flex-1 flex justify-center items-center py-2 px-4 btn-primary rounded-lg font-medium transition disabled:opacity-50"
                     disabled={isProcessing || !canUpgrade}
                 >
                     {isProcessing && canUpgrade ? 'Upgrading...' : 'Upgrade Plan'}

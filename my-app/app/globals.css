@@ -64,8 +64,8 @@ body {
 
 .payment-panel .btn-primary,
 .subscription-panel .btn-primary {
-  background: var(--primary);
-  color: #fff;
+  background: var(--accent);
+  color: #111; /* dark text on muted yellow for readability */
   border: none;
   border-radius: var(--button-radius);
   padding: 0.6rem 1rem;
@@ -73,7 +73,7 @@ body {
 
 .payment-panel .btn-primary:hover,
 .subscription-panel .btn-primary:hover {
-  background: var(--primary-hover);
+  background: var(--accent-900);
 }
 
 /* small helper class for accent badges if components want a consistent look */
