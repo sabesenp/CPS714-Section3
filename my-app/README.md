@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Payment & Billing Dashboard
 
-## Getting Started
+A Next.js application for managing payments, subscriptions, and billing history. Built as a school project demonstrating modern web development practices with React, TypeScript, and Supabase.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Dashboard Overview**: View current balance, next payment, active subscription, and total payments
+- **Payment Processing**: Add funds to account balance
+- **Subscription Management**: View, upgrade, cancel, or reactivate subscriptions
+- **Billing History**: Track all past transactions and payments
+- **Real-time Updates**: Automatic refresh of dashboard data after actions
+
+## Tech Stack
+
+- **Framework**: Next.js 16.3 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: Supabase (PostgreSQL)
+- **Runtime**: React 19.2
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm (or yarn/pnpm)
+- A Supabase project with configured database tables
+
+### Installation
+
+1. Clone or navigate to the project directory:
+
+   ```bash
+   cd my-app
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env.local` file in the root directory:
+
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Available Scripts
+
+- `npm run dev` - Start the development server
+- `npm run build` - Create a production build
+- `npm start` - Run the production server (requires build first)
+- `npm run lint` - Run ESLint to check for code issues
+
+## Database Setup
+
+This application requires the following Supabase tables:
+
+- **memberships**: User membership information (tier, status, balance, dates)
+- **subscriptions**: Subscription plans and pricing
+- **transactions**: Payment and billing history
+
+See the [User Guide](./USER_GUIDE.md) for detailed setup instructions.
+
+## Project Structure
+
+```
+my-app/
+├── app/              # Next.js pages and components
+├── lib/              # Utilities and services (Supabase, data operations)
+├── public/           # Static assets
+└── .env.local        # Environment variables (create this file)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For detailed installation, setup, and usage instructions, please see the [User Guide](./USER_GUIDE.md).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
+- This is a school project demonstration
+- Uses a hardcoded test user ID for demonstration purposes
+- Currency displayed in Canadian Dollars (C$)
+- Includes dark mode support via Tailwind CSS
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is created for educational purposes.
