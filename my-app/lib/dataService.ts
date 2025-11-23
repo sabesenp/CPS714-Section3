@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase'; 
 
 // --- Type Definition for Fetched Data (from DB) ---
@@ -9,6 +10,7 @@ interface FetchedData {
     created_at: string | null;
     subscriptions: { Cost: number } | null; 
     balance: number | null; 
+    recurring: string | null; // Added recurring field
 }
 
 // --- Type Definition for Subscription Data (for Component) ---
@@ -20,6 +22,7 @@ export type SubscriptionType = {
     member_since: string | null;
     next_renewal: string | null;
     balance: number | null;
+    recurring: string; // Added recurring field
 };
 
 // --- Type Definition for Payment Methods (for Component) ---
@@ -81,7 +84,8 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
         current_period_start, 
         current_period_end, 
         created_at,
-        balance,             
+        balance,
+        recurring, 
         subscriptions ( Cost ) 
       `)
       .eq('user_id', userId)
@@ -98,16 +102,17 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
         
         const price = membershipData.subscriptions?.Cost ?? null; 
         
-        const { tier, status, created_at, current_period_start, current_period_end, balance } = membershipData;
+        const { tier, status, created_at, current_period_start, current_period_end, balance, recurring } = membershipData;
 
         return {
             plan_name: tier,
             price: price, 
-            billing_cycle: 'monthly', 
+            billing_cycle: recurring || 'monthly', // Use recurring from DB, default to monthly
             is_active: status === 'active',
             member_since: created_at || current_period_start,
             next_renewal: current_period_end,
             balance: balance,
+            recurring: recurring || 'monthly',
         };
     }
 
@@ -116,7 +121,6 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
 
 export async function fetchPaymentMethods(userId: string): Promise<PaymentMethod[]> {
     // --- MOCK IMPLEMENTATION ---
-    // In a real app, this would fetch saved card details from a 'payment_methods' table.
     return [
         { id: 101, card_type: "Visa", last_four: "4242", is_default: true },
         { id: 102, card_type: "Mastercard", last_four: "1234", is_default: false },
@@ -162,7 +166,7 @@ export async function updateMembershipTier(
     newStatus: string, 
     currentBalance: number, 
     price: number,
-    action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel',
+    action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel' | 'cycle',
     newRecurringCycle: 'monthly' | 'annual'
 ): Promise<{ success: boolean, message: string }> {
     
@@ -180,25 +184,29 @@ export async function updateMembershipTier(
     let updatedFields: { [key: string]: any } = { 
         tier: newTier, 
         status: newStatus,
-        recurring: newRecurringCycle // Update the billing cycle
+        recurring: newRecurringCycle 
     };
 
     if (newStatus === 'active') {
         const now = new Date();
-        const nextMonth = new Date();
+        const nextPeriodEnd = new Date(now); // Start with current date
         
-        // Reset renewal date to 1 month from now
-        nextMonth.setMonth(now.getMonth() + 1);
+        // Calculate renewal date based on cycle
+        if (newRecurringCycle === 'monthly') {
+            nextPeriodEnd.setMonth(now.getMonth() + 1);
+        } else if (newRecurringCycle === 'annual') {
+            nextPeriodEnd.setFullYear(now.getFullYear() + 1);
+        }
 
         updatedFields.current_period_start = now.toISOString();
-        updatedFields.current_period_end = nextMonth.toISOString();
+        updatedFields.current_period_end = nextPeriodEnd.toISOString();
         
     } else if (newStatus === 'canceled') {
         // When canceled, clear renewal dates as requested
         updatedFields.current_period_start = null;
         updatedFields.current_period_end = null;
     }
-
+    
     // 2. Retrieve membership ID and update DB
     const { data: membershipData, error: fetchError } = await supabase
         .from('memberships')
