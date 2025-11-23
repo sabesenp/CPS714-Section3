@@ -80,7 +80,7 @@ export default function PaymentsAndBilling() {
   if (error) return <div className="flex justify-center w-full min-h-screen items-center text-red-500">Error: {error}</div>;
 
   // FALLBACK/TYPE ASSERTION: Correctly handles null subscription object.
-  const currentPlan = subscription || {} as CurrentSubscriptionType;
+  const currentPlan = subscription || {} as SubscriptionType;
 
   // BALANCE CALCULATION: Correctly handles null balance from DB by defaulting to 0.
   const balance = currentPlan.balance ?? 0; 
@@ -105,16 +105,16 @@ export default function PaymentsAndBilling() {
   }
 
   return (
-    <div className="flex justify-center w-full min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-12 font-sans">
+    <div className="flex justify-center w-full min-h-screen bg-black p-8 sm:p-12 font-sans">
       
       <div className="w-full max-w-6xl">
         
         {/* Title is correct */}
         <header className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-100 mb-2">
             Payment & Billing
           </h1>
-          <p className="text-lg text-gray-600 dark:text-zinc-400">
+          <p className="text-lg text-gray-400">
             Manage your payments, subscriptions, and billing history
           </p>
         </header>
@@ -123,39 +123,39 @@ export default function PaymentsAndBilling() {
         <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           
           {/* 🟢 Box 1: CURRENT BALANCE */}
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
-             <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Current Balance</p>
-             <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
+          <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
+             <p className="text-base font-semibold text-amber-500 mb-2">Current Balance</p>
+             <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-amber-500'}`}>
                  {balance < 0 ? "-" : ""}
                  {formattedBalance}
              </p>
-             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{balanceStatus}</p>
+             <p className="text-xs text-gray-400 mt-1">{balanceStatus}</p>
           </div>
           
           {/* 🟡 Box 2: NEXT PAYMENT */}
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
-             <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Next Payment</p>
-             <p className="text-2xl font-bold text-gray-900 dark:text-white">{nextPaymentAmount}</p>
-             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">Due {nextPaymentDate}</p>
+          <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
+             <p className="text-base font-semibold text-gray-400 mb-2">Next Payment</p>
+             <p className="text-2xl font-bold text-gray-100">{nextPaymentAmount}</p>
+             <p className="text-xs text-gray-500 mt-1">Due {nextPaymentDate}</p>
           </div>
           
           {/* 🔵 Box 3: ACTIVE SUBSCRIPTION */}
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
-             <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Active Subscription</p>
-             <p className="text-2xl font-bold text-gray-900 dark:text-white">{paymentPlan}</p>
-             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">Billed {billingCycle}</p>
+          <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
+             <p className="text-base font-semibold text-gray-400 mb-2">Active Subscription</p>
+             <p className="text-2xl font-bold text-gray-100">{paymentPlan}</p>
+             <p className="text-xs text-gray-500 mt-1">Billed {billingCycle}</p>
           </div>
           
           {/* 🔴 Box 4: TOTAL PAYMENTS */}
-          <div className="h-32 p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
-             <p className="text-base font-semibold text-gray-700 dark:text-zinc-300 mb-2">Total Payments (2025)</p>
-             <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalPayments}</p>
-             <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">{transactions} transactions</p>
+          <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
+             <p className="text-base font-semibold text-gray-400 mb-2">Total Payments (2025)</p>
+             <p className="text-2xl font-bold text-gray-100">{totalPayments}</p>
+             <p className="text-xs text-gray-500 mt-1">{transactions} transactions</p>
           </div>
 
         </section>
 
-        <hr className="my-10 border-gray-200 dark:border-zinc-700" />
+        <hr className="my-10 border-gray-800" />
 
         {/* SECTION 2: DETAIL PANELS (Bottom Row) */}
         <section className="w-full flex flex-col md:flex-row gap-6">
@@ -172,7 +172,7 @@ export default function PaymentsAndBilling() {
 
           {/* RIGHT BOX: Make a Payment Form */}
           <PaymentForm
-            currentPlan={currentPlan} // ADDED
+            currentPlan={currentPlan} 
             // FIX: Use the safe utility function to ensure type is 'monthly' or 'annual'
             currentRecurring={getSafeRecurringCycle(currentPlan.recurring)} 
             paymentMethods={paymentMethods}
