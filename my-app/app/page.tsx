@@ -31,7 +31,7 @@ export default function PaymentsAndBilling() {
   const [totalPayments, setTotalPayments] = useState<string>(formatValue(0));
   const [transactions, setTransactions] = useState<number>(0);
 
-
+  //For our program the User`s ID is hardcoded. Ti swictch users please replace this value with your desired user ID from the shared Supabase
   const mockUserId = '49f7c14c-1c83-49fc-8701-38043efdb920'; 
   
   // handler passed to BillingHistory to receive totals

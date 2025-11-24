@@ -58,7 +58,7 @@ body {
 /* Primary Button Styles */
 .btn-primary {
   background: var(--primary);
-  color: #1a1a1a; /* Dark text */
+  color: #1a1a1a; 
   border: none;
   border-radius: var(--button-radius);
   padding: 0.6rem 1rem;
