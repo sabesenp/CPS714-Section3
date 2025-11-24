@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 
-// ACTION: Updated Props interface to match the 7 arguments required by updateMembershipTier
 interface SubscriptionPanelProps {
     currentPlan: any; 
     formatValue: (value: any) => string;
     formatDate: (dateString: string) => string;
     userId: string;
-    // The signature includes the 'action' and 'newRecurringCycle' parameters.
     updateTierService: (
         userId: string, 
         newTier: string, 
@@ -29,26 +27,23 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success', message: string } | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Check if currentPlan data has been loaded and is valid (needed to prevent errors on null data)
+    // Check if currentPlan data has been loaded and is valid 
     const isDataLoaded = currentPlan && currentPlan.plan_name;
     
-    // Safely access plan_name and currentStatus, providing a default string fallback.
+    // access plan_name and currentStatus
     const currentTier = currentPlan.plan_name?.toLowerCase() ?? '';
-    // Ensure status is a non-null string for the logic below
     const currentStatus = currentPlan.is_active ? 'active' : (currentPlan.status?.toLowerCase() ?? 'inactive'); 
     
     const currentBalance = currentPlan.balance ?? 0;
     const currentPrice = currentPlan.price ?? 0;
     
-    // currentRecurring is derived from the safe check in the parent
     const currentRecurring = currentPlan.recurring === 'annual' ? 'annual' : 'monthly';
 
-    // Determine the price display
+    // price display
     const priceDisplay = isDataLoaded && currentPrice !== null 
         ? `${formatValue(currentPrice)}/${currentRecurring === 'annual' ? 'year' : 'month'}` // Dynamic suffix
         : 'N/A';
 
-    // --- Action Handlers ---
 
     const handleAction = async (action: 'upgrade' | 'downgrade' | 'cancel' | 'reactivate' | 'cycle') => {
         if (!currentTier || !isDataLoaded) return;
@@ -61,10 +56,8 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         let newStatus = currentStatus;
         let priceToCheck = currentPrice; 
         
-        // Ensure newRecurringCycle is explicitly typed as the literal type
         let newRecurringCycle: 'monthly' | 'annual' = currentRecurring; 
 
-        // --- LOGIC EXECUTION ---
         if (action === 'upgrade') {
             const nextIndex = tierIndex + 1;
             newTier = TIER_HIERARCHY[nextIndex];
@@ -79,7 +72,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             const nextIndex = tierIndex - 1;
             newTier = TIER_HIERARCHY[nextIndex];
             newStatus = 'active'; 
-            priceToCheck = 0; // Downgrade is free and bypasses balance check
+            priceToCheck = 0; // Downgrade bypasses balance check
 
             if (!newTier) {
                 setStatusMessage({ type: 'error', message: `Cannot downgrade: Already on lowest tier.` });
@@ -96,16 +89,14 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             newTier = currentTier;
             priceToCheck = currentPrice; 
         } else if (action === 'cycle') {
-             // Cycle change is generally free, but changes the billing cycle.
+             // Cycle change is free, but changes the billing cycle.
              newRecurringCycle = currentRecurring === 'monthly' ? 'annual' : 'monthly';
              priceToCheck = 0;
              newTier = currentTier;
              newStatus = currentStatus;
         }
 
-        // --- Execute Supabase Update (Includes Balance Check and Date Reset) ---
         try {
-            // The service function handles: 1) Balance check, 2) Date setting, 3) DB write
             const result = await updateTierService(
                 userId, 
                 newTier, 
@@ -118,9 +109,9 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             
             if (result.success) {
                 setStatusMessage({ type: 'success', message: `Subscription successfully ${action === 'cancel' ? 'canceled' : (action === 'cycle' ? 'cycle updated' : 'updated/activated')}.` });
-                onSubscriptionUpdate(); // RELOAD PARENT DATA TO UPDATE DATES/BALANCE
+                onSubscriptionUpdate(); 
             } else {
-                // This handles the "Insufficient balance" message from dataService.ts
+                //handles the "Insufficient balance" message
                 setStatusMessage({ type: 'error', message: result.message });
             }
         } catch (error) {
@@ -130,8 +121,6 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         }
     };
     
-    // --- Conditional Button Status ---
-
     const canUpgrade = currentStatus === 'active' && TIER_HIERARCHY.indexOf(currentTier) < TIER_HIERARCHY.length - 1;
     const canDowngrade = currentStatus === 'active' && TIER_HIERARCHY.indexOf(currentTier) > 0;
     const canCancel = currentStatus === 'active';
@@ -140,7 +129,6 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
     const isReady = !isProcessing && isDataLoaded;
 
     return (
-        // ACTION: Added subscription-panel class
         <div className="flex-1 min-w-[320px] p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800 subscription-panel">
             
             {/* Header and Status Badge */}
@@ -165,7 +153,6 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex justify-between items-end mb-6 border-b border-gray-700 pb-4">
                 <div>
                     <h3 className="text-lg font-medium text-gray-100">
-                        {/* FIX: Use optional chaining and fallback string to guarantee non-null string */}
                         {isDataLoaded ? (currentPlan.plan_name ?? 'N/A').toUpperCase() : 'Loading Plan...'}
                     </h3>
                     <p className="text-sm text-gray-400">
@@ -182,7 +169,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </div>
             </div>
 
-            {/* Member Since and Next Renewal Info */}
+            {/* Member Since and Next Renewal*/}
             <div className="flex justify-start space-x-12 text-sm mb-4">
                 {/* Member Since */}
                 <div className="flex flex-col">
@@ -200,14 +187,14 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </div>
             </div>
             
-            {/* --- Status Message Alert --- */}
+            
             {statusMessage && (
                 <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}`}>
                     {isProcessing ? 'Processing request...' : statusMessage.message}
                 </div>
             )}
 
-            {/* --- Billing Cycle Switch --- */}
+            {/* Billing Cycle Switch */}
             <div className="flex justify-end mb-4">
                 <button 
                     onClick={() => handleAction('cycle')}
@@ -218,7 +205,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </button>
             </div>
 
-            {/* --- Action Buttons Row 1: Upgrade & Cancel --- */}
+            {/*Action Buttons Row 1: Upgrade & Cancel*/}
             <div className="flex space-x-4">
                 <button 
                     onClick={() => handleAction('upgrade')}
@@ -236,7 +223,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
                 </button>
             </div>
             
-            {/* --- Action Buttons Row 2: Downgrade & Reactivate --- */}
+            {/*Action Buttons Row 2: Downgrade & Reactivate*/}
             <div className="flex space-x-4 mt-2">
                 <button 
                     onClick={() => handleAction('downgrade')}
