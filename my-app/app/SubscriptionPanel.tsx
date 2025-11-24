@@ -8,7 +8,7 @@ interface SubscriptionPanelProps {
     formatValue: (value: any) => string;
     formatDate: (dateString: string) => string;
     userId: string;
-    // CRITICAL FIX: The signature now includes the 'action' and 'newRecurringCycle' parameters.
+    // The signature includes the 'action' and 'newRecurringCycle' parameters.
     updateTierService: (
         userId: string, 
         newTier: string, 
@@ -32,15 +32,15 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
     // Check if currentPlan data has been loaded and is valid (needed to prevent errors on null data)
     const isDataLoaded = currentPlan && currentPlan.plan_name;
     
-    // FIX: Safely access plan_name and currentStatus, providing a default string fallback.
+    // Safely access plan_name and currentStatus, providing a default string fallback.
     const currentTier = currentPlan.plan_name?.toLowerCase() ?? '';
-    // FIX: Ensure status is a non-null string for the logic below
+    // Ensure status is a non-null string for the logic below
     const currentStatus = currentPlan.is_active ? 'active' : (currentPlan.status?.toLowerCase() ?? 'inactive'); 
     
     const currentBalance = currentPlan.balance ?? 0;
     const currentPrice = currentPlan.price ?? 0;
     
-    // CRITICAL: currentRecurring is derived from the safe check in the parent
+    // currentRecurring is derived from the safe check in the parent
     const currentRecurring = currentPlan.recurring === 'annual' ? 'annual' : 'monthly';
 
     // Determine the price display
@@ -61,7 +61,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
         let newStatus = currentStatus;
         let priceToCheck = currentPrice; 
         
-        // FIX: Ensure newRecurringCycle is explicitly typed as the literal type
+        // Ensure newRecurringCycle is explicitly typed as the literal type
         let newRecurringCycle: 'monthly' | 'annual' = currentRecurring; 
 
         // --- LOGIC EXECUTION ---
@@ -141,42 +141,42 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
 
     return (
         // ACTION: Added subscription-panel class
-        <div className="flex-1 min-w-[320px] p-6 bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-gray-100 dark:border-zinc-700 subscription-panel">
+        <div className="flex-1 min-w-[320px] p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800 subscription-panel">
             
             {/* Header and Status Badge */}
             <div className="flex justify-between items-start mb-4">
                 <div className='flex flex-col'>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Current Subscription</h2>
-                    <p className="text-sm text-gray-600 dark:text-zinc-400">Manage your membership plan and billing</p>
+                    <h2 className="text-xl font-semibold text-gray-100">Current Subscription</h2>
+                    <p className="text-sm text-gray-400">Manage your membership plan and billing</p>
                 </div>
                 {/* Status Badge */}
                 {isDataLoaded && currentPlan.is_active ? (
-                    <span className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full dark:text-green-300 dark:bg-green-900 self-start">
+                    <span className="px-3 py-1 text-xs font-medium bg-amber-600 text-gray-900 rounded-full self-start">
                         Active
                     </span>
                 ) : (
-                    <span className="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full dark:text-red-300 dark:bg-red-900 self-start">
+                    <span className="px-3 py-1 text-xs font-medium bg-red-900 text-red-300 rounded-full self-start">
                         {currentStatus === 'canceled' ? 'Canceled' : 'Inactive'}
                     </span>
                 )}
             </div>
 
             {/* Plan Name and Price */}
-            <div className="flex justify-between items-end mb-6 border-b border-gray-200 dark:border-zinc-700 pb-4">
+            <div className="flex justify-between items-end mb-6 border-b border-gray-700 pb-4">
                 <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-gray-100">
                         {/* FIX: Use optional chaining and fallback string to guarantee non-null string */}
                         {isDataLoaded ? (currentPlan.plan_name ?? 'N/A').toUpperCase() : 'Loading Plan...'}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-zinc-400">
+                    <p className="text-sm text-gray-400">
                         Billed {isDataLoaded ? currentRecurring.toUpperCase() : 'N/A'}
                     </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <p className="text-lg font-semibold text-gray-100">
                         {isDataLoaded && currentPrice !== null ? priceDisplay : 'N/A'}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-zinc-500">
+                    <p className="text-xs text-gray-500">
                         CAD
                     </p>
                 </div>
@@ -186,15 +186,15 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex justify-start space-x-12 text-sm mb-4">
                 {/* Member Since */}
                 <div className="flex flex-col">
-                    <p className="font-medium text-gray-700 dark:text-zinc-300 mb-2">Member Since</p>
-                    <div className="flex items-center space-x-2 text-gray-500 dark:text-zinc-400">
+                    <p className="font-medium text-gray-400 mb-2">Member Since</p>
+                    <div className="flex items-center space-x-2 text-gray-300">
                         <p>{isDataLoaded ? formatDate(currentPlan.member_since) : '...'}</p>
                     </div>
                 </div>
                 {/* Next Renewal */}
                 <div className="flex flex-col">
-                    <p className="font-medium text-gray-700 dark:text-zinc-300 mb-2">Next Renewal</p>
-                    <div className="flex items-center space-x-2 text-gray-500 dark:text-zinc-400">
+                    <p className="font-medium text-gray-400 mb-2">Next Renewal</p>
+                    <div className="flex items-center space-x-2 text-gray-300">
                         <p>{isDataLoaded ? formatDate(currentPlan.next_renewal) : '...'}</p>
                     </div>
                 </div>
@@ -202,7 +202,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             
             {/* --- Status Message Alert --- */}
             {statusMessage && (
-                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                <div className={`p-3 my-4 rounded-lg text-sm font-medium ${statusMessage.type === 'error' ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}`}>
                     {isProcessing ? 'Processing request...' : statusMessage.message}
                 </div>
             )}
@@ -211,7 +211,7 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex justify-end mb-4">
                 <button 
                     onClick={() => handleAction('cycle')}
-                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline transition disabled:opacity-50"
+                    className="text-sm text-amber-500 hover:text-amber-300 transition disabled:opacity-50"
                     disabled={isProcessing}
                 >
                     Switch to {currentRecurring === 'monthly' ? 'Annual' : 'Monthly'} Billing
@@ -222,14 +222,14 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex space-x-4">
                 <button 
                     onClick={() => handleAction('upgrade')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-indigo-500 bg-indigo-500 text-white rounded-lg font-medium transition disabled:bg-gray-300 disabled:border-gray-300 hover:bg-indigo-600 btn-primary"
+                    className="flex-1 flex justify-center items-center py-2 px-4 border-none bg-amber-500 text-gray-900 rounded-lg font-medium transition disabled:bg-gray-700 disabled:text-gray-400 hover:bg-amber-400 btn-primary"
                     disabled={isProcessing || !canUpgrade}
                 >
                     {isProcessing && canUpgrade ? 'Upgrading...' : 'Upgrade Plan'}
                 </button>
                 <button 
                     onClick={() => handleAction('cancel')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50"
                     disabled={isProcessing || !canCancel}
                 >
                     Cancel Subscription
@@ -240,14 +240,14 @@ export default function SubscriptionPanel({ currentPlan, formatValue, formatDate
             <div className="flex space-x-4 mt-2">
                 <button 
                     onClick={() => handleAction('downgrade')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center py-2 px-4 border border-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50"
                     disabled={isProcessing || !canDowngrade}
                 >
                     Downgrade Plan
                 </button>
                 <button 
                     onClick={() => handleAction('reactivate')}
-                    className="flex-1 flex justify-center items-center py-2 px-4 border border-green-500 text-green-600 rounded-lg font-medium hover:bg-green-50 dark:hover:bg-green-900 transition disabled:opacity-50"
+                    className="flex-1 flex justify-center items-center py-2 px-4 border border-amber-500 text-amber-500 rounded-lg font-medium hover:bg-amber-900/30 transition disabled:opacity-50"
                     disabled={isProcessing || !canReactivate}
                 >
                     {isProcessing && canReactivate ? 'Activating...' : 'Reactivate Plan'}

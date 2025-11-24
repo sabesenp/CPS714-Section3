@@ -1,29 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* Match frontend theme defaults (dark-first palette) */
-  --background: #242424;
-  --foreground: rgba(255,255,255,0.87);
-  --primary: #646cff;
-  --primary-hover: #535bf2;
-  --button-bg: #1a1a1a;
-  --button-radius: 8px;
-  --card-bg: rgba(26,26,26,0.8);
-}
+  /* Final Dark/Brighter Yellow Theme */
+  --background: #1a1a1a; /* Near Black Background */
+  --foreground: #ededed; /* Light Text */
+  --primary: #f59e0b; /* Amber 500 (Base Gold) */
+  --primary-hover: #eab308; /* Amber 600 (Darker Gold) */
+  
+  --yellow-main: #f59e0b; /* Custom variable for Amber-500 */
+  --yellow-hover: #eab308; /* Custom variable for Amber-600 */
+  --yellow-active: #fbbf24; /* Amber-400 for text/borders (Brighter Gold) */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --button-bg: #262626; /* Dark Gray Input/Card Background */
+  --button-radius: 8px;
+  --card-bg: rgba(26, 26, 26, 0.8);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* dark mode already close to frontend; keep primary */
-    --background: #242424;
-    --foreground: rgba(255,255,255,0.87);
-    --button-bg: #1a1a1a;
+    --background: #1a1a1a;
+    --foreground: #ededed;
   }
 }
 
@@ -36,39 +32,42 @@ body {
 /* Payment page specific styles */
 .payment-panel,
 .subscription-panel {
-  background: var(--card-bg);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background-color: var(--button-bg); 
+  border-color: #3f3f46;
 }
 
-.payment-panel input[type="text"],
-.payment-panel input[type="number"],
-.subscription-panel input[type="text"],
-.subscription-panel input[type="number"],
+/* Input Fields */
+.payment-panel input,
+.subscription-panel input,
 .payment-panel select,
 .subscription-panel select {
-  transition: box-shadow .16s ease, transform .12s ease;
+  background-color: #333333;
+  color: var(--foreground);
+  border: 1px solid #525252;
+  transition: box-shadow 0.16s ease, transform 0.12s ease;
 }
 
 .payment-panel input:focus,
 .subscription-panel input:focus,
 .payment-panel select:focus,
 .subscription-panel select:focus {
-  box-shadow: 0 6px 18px rgba(99,102,241,0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
   transform: translateY(-1px);
 }
 
-.payment-panel .btn-primary,
-.subscription-panel .btn-primary {
+/* Primary Button Styles */
+.btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: #1a1a1a; /* Dark text for contrast on gold background */
   border: none;
   border-radius: var(--button-radius);
   padding: 0.6rem 1rem;
+  font-weight: 600;
+  transition: background 0.15s ease;
 }
 
-.payment-panel .btn-primary:hover,
-.subscription-panel .btn-primary:hover {
+.btn-primary:hover {
   background: var(--primary-hover);
 }
 
@@ -80,15 +79,15 @@ body {
   }
   .payment-panel button,
   .subscription-panel button {
-    padding-top: .85rem !important;
-    padding-bottom: .85rem !important;
+    padding-top: 0.85rem !important;
+    padding-bottom: 0.85rem !important;
   }
 }
 
-/* Subtle divider for content groups */
+/* Subtle divider for content groups (Updated for dark theme) */
 .payment-panel .section-divider,
 .subscription-panel .section-divider {
   height: 1px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.03));
-  margin: .75rem 0 1rem 0;
+  background-color: #3f3f46;
+  margin: 0.75rem 0 1rem 0;
 }
