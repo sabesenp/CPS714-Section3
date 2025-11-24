@@ -102,7 +102,6 @@ export default function PaymentsAndBilling() {
       
       <div className="w-full max-w-6xl">
         
-        {/* Title is correct */}
         <header className="mb-10">
           <h1 className="text-3xl font-bold text-gray-100 mb-2">
             Payment & Billing
@@ -112,10 +111,10 @@ export default function PaymentsAndBilling() {
           </p>
         </header>
 
-        {/* SECTION 1: SUMMARY CARDS (Top Row) */}
+        {/*SUMMARY CARDS */}
         <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-12">
           
-          {/* 🟢 Box 1: CURRENT BALANCE */}
+          {/* CURRENT BALANCE */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
              <p className="text-base font-semibold text-gray-400 mb-2">Current Balance</p>
              <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-amber-500'}`}>
@@ -125,21 +124,21 @@ export default function PaymentsAndBilling() {
              <p className="text-xs text-gray-500 mt-1">{balanceStatus}</p>
           </div>
           
-          {/* 🟡 Box 2: NEXT PAYMENT */}
+          {/*NEXT PAYMENT */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
              <p className="text-base font-semibold text-gray-400 mb-2">Next Payment</p>
              <p className="text-2xl font-bold text-gray-100">{nextPaymentAmount}</p>
              <p className="text-xs text-gray-500 mt-1">Due {nextPaymentDate}</p>
           </div>
           
-          {/* 🔵 Box 3: ACTIVE SUBSCRIPTION */}
+          {/*ACTIVE SUBSCRIPTION */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
              <p className="text-base font-semibold text-gray-400 mb-2">Active Subscription</p>
              <p className="text-2xl font-bold text-gray-100">{paymentPlan}</p>
              <p className="text-xs text-gray-500 mt-1">Billed {billingCycle}</p>
           </div>
           
-          {/* 🔴 Box 4: TOTAL PAYMENTS */}
+          {/*TOTAL PAYMENTS */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
              <p className="text-base font-semibold text-gray-400 mb-2">Total Payments (2025)</p>
              <p className="text-2xl font-bold text-amber-500">{totalPayments}</p>
@@ -150,10 +149,10 @@ export default function PaymentsAndBilling() {
 
         <hr className="my-10 border-gray-800" />
 
-        {/* SECTION 2: DETAIL PANELS (Bottom Row) */}
+        {/* Section below fast facts */}
         <section className="w-full flex flex-col md:flex-row gap-6">
           
-          {/* LEFT BOX: Current Subscription Panel */}
+          {/* Current Subscription Panel */}
           <SubscriptionPanel 
             currentPlan={currentPlan}
             formatValue={formatValue}
@@ -163,7 +162,7 @@ export default function PaymentsAndBilling() {
             onSubscriptionUpdate={reloadDashboardData} 
           />
 
-          {/* RIGHT BOX: Make a Payment Form */}
+          {/* Payment Form */}
           <PaymentForm
             currentPlan={currentPlan} 
             currentRecurring={currentRecurringCycle} // Passed safely narrowed type
