@@ -10,7 +10,7 @@ interface PaymentMethod {
     is_default: boolean;
 }
 
-// ACTION: Loosened the currentRecurring type to string (as requested)
+// Interface for PaymentForm
 interface PaymentFormProps {
     currentPlan: SubscriptionType; 
     paymentMethods: PaymentMethod[];
@@ -20,7 +20,7 @@ interface PaymentFormProps {
     currentRecurring: string; 
 }
 
-// Helper to safely coerce the string to a valid cycle for function calls
+// Hoerce the string to a valid cycle for function calls
 const getValidCycle = (cycle: string): 'monthly' | 'annual' => {
     const lower = cycle.toLowerCase();
     if (lower === 'annual') return 'annual';
@@ -39,12 +39,11 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success', message: string } | null>(null);
     
-    // Local state for the toggle UI, initialized using the safe helper
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(getValidCycle(currentRecurring));
 
 
     const formatValue = (value: number) => {
-        // Simple formatter for local display (CAD)
+        // Simple formatter for display 
         return `C$${value.toFixed(2)}`;
     };
 
@@ -73,9 +72,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
         return cleaned;
     };
 
-    // --- Action Handler ---
-
-    // Handler for the payment button (updates balance)
+    // Handler for the payment button, updates balance
     const handleProcessPayment = async () => {
         const validationError = validateForm();
         if (validationError) {
@@ -89,7 +86,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         try {
-            // Call the service to update the user's balance in the database
+            // update the user's balance in the database
             const success = await updateBalanceService(userId, amount);
 
             if (success) {
@@ -112,7 +109,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
         }
     };
     
-    // Handler for the toggle switch (updates recurring field in DB)
+    // Handler for the toggle switch 
     const handleToggleCycle = async () => {
         const newCycle = billingCycle === 'monthly' ? 'annual' : 'monthly';
         
@@ -123,18 +120,18 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
              // Use currentPlan properties needed for the service call
              const result = await updateMembershipTier(
                 userId, 
-                currentPlan.plan_name ?? 'basic', // Safely coalesce plan_name
+                currentPlan.plan_name ?? 'basic', 
                 currentPlan.is_active ? 'active' : 'inactive', 
                 currentPlan.balance ?? 0, 
-                0, // Price check is 0
-                'cycle', // Action type
+                0, 
+                'cycle', 
                 newCycle
             );
 
             if (result.success) {
                 setStatusMessage({ type: 'success', message: `Billing cycle successfully switched to ${newCycle.toUpperCase()}.` });
-                setBillingCycle(newCycle); // Update local state for UI
-                onPaymentSuccess(); // Reload parent data
+                setBillingCycle(newCycle); 
+                onPaymentSuccess();
             } else {
                  setStatusMessage({ type: 'error', message: result.message });
             }
@@ -147,7 +144,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
 
 
     return (
-        // ACTION: Uses payment-panel class for custom styling
+        // custom styling
         <div className="flex-1 min-w-[320px] p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800 payment-panel">
 
             {/* Header */}
@@ -250,7 +247,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
                 Secure payment processing simulated
             </p>
 
-            {/* --- Recurring Cycle Toggle --- */}
+            {/* Toggle  */}
             <div className="flex justify-between items-center bg-gray-800 p-3 rounded-lg border border-gray-700">
                 <span className="text-sm font-medium text-gray-300">
                     Recurring Billing Cycle
@@ -265,8 +262,8 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
                     <span
                         className={`inline-block w-12 h-6 transform bg-white rounded-full transition-transform duration-200 ease-in-out shadow-md text-xs font-semibold flex items-center justify-center ${
                             billingCycle === 'annual'
-                                ? 'translate-x-[45px] text-amber-600' // Moved right for annual
-                                : 'translate-x-[5px] text-gray-700' // Moved left for monthly
+                                ? 'translate-x-[45px] text-amber-600' 
+                                : 'translate-x-[5px] text-gray-700' 
                         }`}
                         style={{ width: '45px' }}
                     >
