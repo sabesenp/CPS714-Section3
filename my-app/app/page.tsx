@@ -40,7 +40,7 @@ export default function PaymentsAndBilling() {
     setTransactions(txnCount);
   };
 
-  // CORE FUNCTION: Fetches all dashboard data and updates state.
+  // Fetches all dashboard data and updates state.
   const reloadDashboardData = useCallback(async () => {
     if (!mockUserId) { 
         setLoading(false); 
@@ -71,7 +71,7 @@ export default function PaymentsAndBilling() {
     }
   }, [mockUserId]);
   
-  // Initial load hook (calls the reusable function)
+  // Initial load hook 
   useEffect(() => {
     reloadDashboardData();
   }, [reloadDashboardData]);
@@ -79,10 +79,10 @@ export default function PaymentsAndBilling() {
   if (loading) return <div className="flex justify-center w-full min-h-screen items-center text-gray-500">Loading payment and billing data...</div>;
   if (error) return <div className="flex justify-center w-full min-h-screen items-center text-red-500">Error: {error}</div>;
 
-  // FALLBACK/TYPE ASSERTION: Correctly handles null subscription object.
+  // Fhandles null subscription object.
   const currentPlan = subscription || {} as SubscriptionType;
 
-  // BALANCE CALCULATION: Correctly handles null balance from DB by defaulting to 0.
+  // handles null balance from DB by defaulting to 0.
   const balance = currentPlan.balance ?? 0; 
   const balanceStatus = balance >= 0 ? "Credit / Prepaid" : "Balance Due";
   
@@ -94,7 +94,7 @@ export default function PaymentsAndBilling() {
   const nextPaymentDate = currentPlan.next_renewal ? formatDate(currentPlan.next_renewal) : 'N/A';
   const paymentPlan = currentPlan.plan_name ? currentPlan.plan_name.toUpperCase() : 'N/A';
   const billingCycle = currentPlan.recurring ? currentPlan.recurring.toUpperCase() : 'N/A';
-  // FIX: Safely determine the recurring cycle for the PaymentForm prop
+  // determine the recurring cycle for the PaymentForm prop
   const currentRecurringCycle = currentPlan.recurring === 'annual' ? 'annual' : 'monthly';
 
   return (
@@ -165,7 +165,7 @@ export default function PaymentsAndBilling() {
           {/* Payment Form */}
           <PaymentForm
             currentPlan={currentPlan} 
-            currentRecurring={currentRecurringCycle} // Passed safely narrowed type
+            currentRecurring={currentRecurringCycle} 
             paymentMethods={paymentMethods}
             userId={mockUserId}
             updateBalanceService={updateUserBalance}

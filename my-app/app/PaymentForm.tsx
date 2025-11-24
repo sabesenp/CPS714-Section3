@@ -28,14 +28,14 @@ const getValidCycle = (cycle: string): 'monthly' | 'annual' => {
 };
 
 export default function PaymentForm({ currentPlan, paymentMethods, userId, updateBalanceService, onPaymentSuccess, currentRecurring }: PaymentFormProps) {
-    // --- Form State ---
+    //Form State
     const [cardholderName, setCardholderName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [expDate, setExpDate] = useState('');
     const [cvc, setCvc] = useState('');
     const [amount, setAmount] = useState(0.00);
     
-    // --- UI State ---
+    // UI State
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: 'error' | 'success', message: string } | null>(null);
     
@@ -47,7 +47,7 @@ export default function PaymentForm({ currentPlan, paymentMethods, userId, updat
         return `C$${value.toFixed(2)}`;
     };
 
-    // --- Validation and Formatting Helpers ---
+    // Validation and Formatting Helpers
 
     const validateForm = () => {
         if (amount <= 0) return "Please enter an amount greater than zero.";
