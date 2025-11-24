@@ -94,15 +94,8 @@ export default function PaymentsAndBilling() {
   const nextPaymentDate = currentPlan.next_renewal ? formatDate(currentPlan.next_renewal) : 'N/A';
   const paymentPlan = currentPlan.plan_name ? currentPlan.plan_name.toUpperCase() : 'N/A';
   const billingCycle = currentPlan.recurring ? currentPlan.recurring.toUpperCase() : 'N/A';
-
-  // FIX: Utility function to safely narrow the string to 'monthly' or 'annual'
-  const getSafeRecurringCycle = (cycle: string | null): 'monthly' | 'annual' => {
-      const lower = cycle?.toLowerCase();
-      if (lower === 'monthly' || lower === 'annual') {
-          return lower;
-      }
-      return 'monthly'; // Default to monthly if invalid or null
-  }
+  // FIX: Safely determine the recurring cycle for the PaymentForm prop
+  const currentRecurringCycle = currentPlan.recurring === 'annual' ? 'annual' : 'monthly';
 
   return (
     <div className="flex justify-center w-full min-h-screen bg-black p-8 sm:p-12 font-sans">
@@ -124,12 +117,12 @@ export default function PaymentsAndBilling() {
           
           {/* 🟢 Box 1: CURRENT BALANCE */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
-             <p className="text-base font-semibold text-amber-500 mb-2">Current Balance</p>
+             <p className="text-base font-semibold text-gray-400 mb-2">Current Balance</p>
              <p className={`text-2xl font-bold ${balance < 0 ? 'text-red-500' : 'text-amber-500'}`}>
                  {balance < 0 ? "-" : ""}
                  {formattedBalance}
              </p>
-             <p className="text-xs text-gray-400 mt-1">{balanceStatus}</p>
+             <p className="text-xs text-gray-500 mt-1">{balanceStatus}</p>
           </div>
           
           {/* 🟡 Box 2: NEXT PAYMENT */}
@@ -149,7 +142,7 @@ export default function PaymentsAndBilling() {
           {/* 🔴 Box 4: TOTAL PAYMENTS */}
           <div className="h-32 p-6 bg-gray-900 rounded-xl shadow-md border border-gray-800">
              <p className="text-base font-semibold text-gray-400 mb-2">Total Payments (2025)</p>
-             <p className="text-2xl font-bold text-gray-100">{totalPayments}</p>
+             <p className="text-2xl font-bold text-amber-500">{totalPayments}</p>
              <p className="text-xs text-gray-500 mt-1">{transactions} transactions</p>
           </div>
 
@@ -173,8 +166,7 @@ export default function PaymentsAndBilling() {
           {/* RIGHT BOX: Make a Payment Form */}
           <PaymentForm
             currentPlan={currentPlan} 
-            // FIX: Use the safe utility function to ensure type is 'monthly' or 'annual'
-            currentRecurring={getSafeRecurringCycle(currentPlan.recurring)} 
+            currentRecurring={currentRecurringCycle} // Passed safely narrowed type
             paymentMethods={paymentMethods}
             userId={mockUserId}
             updateBalanceService={updateUserBalance}
