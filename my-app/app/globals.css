@@ -1,17 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Final Dark/Brighter Yellow Theme */
-  --background: #1a1a1a; /* Near Black Background */
+  --background: #1a1a1a; /*Black Background */
   --foreground: #ededed; /* Light Text */
-  --primary: #f59e0b; /* Amber 500 (Base Gold) */
-  --primary-hover: #eab308; /* Amber 600 (Darker Gold) */
+  --primary: #f59e0b; 
+  --primary-hover: #eab308; 
   
-  --yellow-main: #f59e0b; /* Custom variable for Amber-500 */
-  --yellow-hover: #eab308; /* Custom variable for Amber-600 */
-  --yellow-active: #fbbf24; /* Amber-400 for text/borders (Brighter Gold) */
+  --yellow-main: #f59e0b; 
+  --yellow-hover: #eab308; 
+  --yellow-active: #fbbf24; 
 
-  --button-bg: #262626; /* Dark Gray Input/Card Background */
+  --button-bg: #262626;
   --button-radius: 8px;
   --card-bg: rgba(26, 26, 26, 0.8);
 }
@@ -29,7 +28,7 @@ body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-/* Payment page specific styles */
+/* Payment page */
 .payment-panel,
 .subscription-panel {
   background-color: var(--button-bg); 
@@ -59,7 +58,7 @@ body {
 /* Primary Button Styles */
 .btn-primary {
   background: var(--primary);
-  color: #1a1a1a; /* Dark text for contrast on gold background */
+  color: #1a1a1a; /* Dark text */
   border: none;
   border-radius: var(--button-radius);
   padding: 0.6rem 1rem;
@@ -71,7 +70,7 @@ body {
   background: var(--primary-hover);
 }
 
-/* Accessibility: larger hit targets on mobile */
+/* Accessibility for mobile users */
 @media (max-width: 640px) {
   .payment-panel,
   .subscription-panel {
@@ -84,7 +83,7 @@ body {
   }
 }
 
-/* Subtle divider for content groups (Updated for dark theme) */
+/* divider for different sections */
 .payment-panel .section-divider,
 .subscription-panel .section-divider {
   height: 1px;
