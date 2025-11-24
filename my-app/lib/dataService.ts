@@ -1,10 +1,7 @@
-// This file is responsible for all communication with Supabase and data formatting.
 
-// Assuming the supabase client is in the same directory (./supabase.js)
-// If it's in a sibling folder (e.g., ../supabase), update this path accordingly.
 import { supabase } from './supabase'; 
 
-// --- Type Definition for Fetched Data (from DB) ---
+//Interfaces for collecting Data
 interface FetchedData {
     tier: string;
     status: 'active' | 'canceled' | 'past_due' | string | null;
@@ -16,8 +13,7 @@ interface FetchedData {
     recurring: string | null; 
 }
 
-// --- Type Definition for Subscription Data (for Component) ---
-export type SubscriptionType = { // EXPORTED
+export type SubscriptionType = { 
     plan_name: string | null;
     price: number | null;
     billing_cycle: string;
@@ -28,24 +24,21 @@ export type SubscriptionType = { // EXPORTED
     recurring: 'monthly' | 'annual'; 
 };
 
-// --- Type Definition for Payment Methods (for Component) ---
-export type PaymentMethod = { // EXPORTED
+export type PaymentMethod = {
     id: number;
     card_type: string;
     last_four: string;
     is_default: boolean;
 };
 
+//helper functions
 
-// --- Helper Functions (Exported) ---
-
-export const formatValue = (value: any): string => { // EXPORTED
-    // Uses C$ symbol for Canadian Dollars (CAD)
+export const formatValue = (value: any): string => { 
     if (value === null || value === undefined) return 'N/A'; 
     return typeof value === 'number' ? `C$${value.toFixed(2)}` : value || 'N/A';
 };
   
-export const formatDate = (dateString: string): string => { // EXPORTED
+export const formatDate = (dateString: string): string => { 
     if (!dateString) return 'N/A';
     if (typeof dateString !== 'string' && typeof dateString !== 'number') return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', { 
@@ -56,9 +49,8 @@ export const formatDate = (dateString: string): string => { // EXPORTED
 };
 
 
-// --- Supabase Fetching Functions (Exported) ---
 
-export async function fetchTestValue(userId: string) { // EXPORTED
+export async function fetchTestValue(userId: string) { 
     if (!userId) return 'User ID Missing';
     
     const { data, error } = await supabase
@@ -76,7 +68,7 @@ export async function fetchTestValue(userId: string) { // EXPORTED
 }
 
 
-export async function fetchSubscriptionData(userId: string): Promise<SubscriptionType | null> { // EXPORTED
+export async function fetchSubscriptionData(userId: string): Promise<SubscriptionType | null> { 
     if (!userId) return null;
     
     const { data, error } = await supabase
@@ -106,7 +98,7 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
         const monthlyPrice = membershipData.subscriptions?.Cost ?? null; 
         const cycle = membershipData.recurring === 'annual' ? 'annual' : 'monthly';
 
-        // FIX: Calculate annual price if cycle is annual
+        // Calculate annual price if cycle is annual
         const finalPrice = (cycle === 'annual' && monthlyPrice !== null)
             ? monthlyPrice * 12 // Annual price is 12x monthly cost
             : monthlyPrice;
@@ -115,21 +107,21 @@ export async function fetchSubscriptionData(userId: string): Promise<Subscriptio
 
         return {
             plan_name: tier,
-            price: finalPrice, // Use the calculated final price
-            billing_cycle: cycle, // Use the validated cycle name
+            price: finalPrice, 
+            billing_cycle: cycle, // Use the cycle name
             is_active: status === 'active',
             member_since: created_at || current_period_start,
             next_renewal: current_period_end,
             balance: balance,
-            recurring: cycle, // Use the validated cycle name
+            recurring: cycle, 
         };
     }
 
     return null;
 }
 
-export async function fetchPaymentMethods(userId: string): Promise<PaymentMethod[]> { // EXPORTED
-    // --- MOCK IMPLEMENTATION ---
+export async function fetchPaymentMethods(userId: string): Promise<PaymentMethod[]> { 
+
     return [
         { id: 101, card_type: "Visa", last_four: "4242", is_default: true },
         { id: 102, card_type: "Mastercard", last_four: "1234", is_default: false },
@@ -137,9 +129,9 @@ export async function fetchPaymentMethods(userId: string): Promise<PaymentMethod
 }
 
 
-export async function updateUserBalance(userId: string, amount: number): Promise<boolean> { // EXPORTED
+export async function updateUserBalance(userId: string, amount: number): Promise<boolean> { 
     
-    // 1. Retrieve the current membership ID and balance
+    //Retrieve the current membership ID and balance
     const { data: membershipData, error: fetchError } = await supabase
         .from('memberships')
         .select('id, balance')
@@ -151,15 +143,15 @@ export async function updateUserBalance(userId: string, amount: number): Promise
         return false;
     }
     
-    // 2. Calculate the new balance (Current credit + Payment amount)
+    //Calculate the new balance 
     const currentBalance = membershipData.balance ?? 0;
     const newBalance = currentBalance + amount; 
     
-    // 3. Update the balance in the database
+    //Update the balance in the database
     const { error: updateError } = await supabase
         .from('memberships')
         .update({ balance: newBalance })
-        .eq('id', membershipData.id); // Update by membership primary key (id)
+        .eq('id', membershipData.id); // Update by membership primary key 
 
     if (updateError) {
         console.error('Supabase balance update failed:', updateError);
@@ -169,17 +161,16 @@ export async function updateUserBalance(userId: string, amount: number): Promise
     return true;
 }
 
-export async function updateMembershipTier( // EXPORTED
+export async function updateMembershipTier( 
     userId: string, 
     newTier: string, 
     newStatus: string, 
     currentBalance: number, 
-    price: number, // NOTE: Price must be passed as the FINAL calculated price (monthly or annual)
+    price: number, 
     action: 'upgrade' | 'reactivate' | 'downgrade' | 'cancel' | 'cycle',
     newRecurringCycle: 'monthly' | 'annual'
 ): Promise<{ success: boolean, message: string }> {
     
-    // --- BALANCE SUFFICIENCY CHECK (Only for actions that cost money) ---
     if (action === 'upgrade' || action === 'reactivate') {
         if (currentBalance < price) {
             return { 
@@ -189,10 +180,9 @@ export async function updateMembershipTier( // EXPORTED
         }
     }
     
-    // 1. Calculate new dates and fields
+    // Calculate new dates and fields
     let updatedFields: { [key: string]: any } = { 
         tier: newTier, 
-        // FIX: Ensure status is explicitly set to one of the three allowed DB values
         status: newStatus === 'canceled' ? 'canceled' : 'active', 
         recurring: newRecurringCycle 
     };
@@ -211,12 +201,10 @@ export async function updateMembershipTier( // EXPORTED
         updatedFields.current_period_end = nextPeriodEnd.toISOString();
         
     } else if (newStatus === 'canceled') {
-        // When canceled, clear renewal dates as requested
         updatedFields.current_period_start = null;
         updatedFields.current_period_end = null;
     }
     
-    // 2. Retrieve membership ID and update DB (omitted for brevity, see full file)
     const { data: membershipData, error: fetchError } = await supabase
         .from('memberships')
         .select('id, balance')
@@ -230,13 +218,11 @@ export async function updateMembershipTier( // EXPORTED
     
     let newBalance = membershipData.balance ?? 0;
 
-    // 3. DEDUCT PRICE (Only for upgrade/reactivate actions)
     if (action === 'upgrade' || action === 'reactivate') {
         newBalance = newBalance - price;
         updatedFields.balance = newBalance;
     }
     
-    // 4. Perform the final database update
     const { error: updateError } = await supabase
         .from('memberships')
         .update(updatedFields)
